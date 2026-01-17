@@ -24,6 +24,8 @@ cmdline = ["commands", "registers"]
 
 # Configuration
 options = []
+fileformat = []
+modeline = ["options"]
 
 # Event system
 autocmd = []
@@ -43,8 +45,8 @@ textobjects = ["buffer", "cursor"]
 all = [
     "buffer", "cursor", "modes", "motions", "operators",
     "registers", "marks", "search", "commands", "options",
-    "cmdline", "autocmd", "windows", "tabs", "folds", "completion",
-    "undo", "visual", "textobjects"
+    "fileformat", "modeline", "cmdline", "autocmd", "windows", "tabs", "folds",
+    "completion", "undo", "visual", "textobjects"
 ]
 
 [dev-dependencies]

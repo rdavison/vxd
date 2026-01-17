@@ -82,6 +82,12 @@ pub mod cmdline;
 #[cfg(feature = "options")]
 pub mod options;
 
+#[cfg(feature = "fileformat")]
+pub mod fileformat;
+
+#[cfg(feature = "modeline")]
+pub mod modeline;
+
 #[cfg(feature = "autocmd")]
 pub mod autocmd;
 
@@ -146,6 +152,12 @@ pub mod prelude {
 
     #[cfg(feature = "options")]
     pub use crate::options::OptionManager;
+
+    #[cfg(feature = "fileformat")]
+    pub use crate::fileformat::FileFormat;
+
+    #[cfg(feature = "modeline")]
+    pub use crate::modeline::ModelineSetting;
 
     #[cfg(feature = "autocmd")]
     pub use crate::autocmd::AutocmdManager;

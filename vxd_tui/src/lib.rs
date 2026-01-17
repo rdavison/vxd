@@ -10,6 +10,7 @@ pub mod buffer;
 pub mod cursor;
 pub mod cmdline;
 pub mod editor;
+pub mod exit;
 pub mod marks;
 pub mod modes;
 pub mod registers;

@@ -21,7 +21,7 @@ pub enum OptionScope {
 }
 
 /// Type of an option value
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum OptionValue {
     /// Boolean option (on/off)
     Boolean(bool),

@@ -81,3 +81,21 @@ fn test_cmdline_history_behavior() {
     let mut cmdline = CmdlineHarness::new();
     cmdline.test_history_remove_item();
 }
+
+/// Test: history limit evicts oldest entries.
+#[test]
+fn test_cmdline_history_limit_eviction() {
+    use vxd::cmdline::CmdlineHistoryKind;
+
+    let mut cmdline = CmdlineHarness::new();
+    cmdline.set_history_limit(2);
+    assert_eq!(cmdline.history_limit(), 2);
+
+    cmdline.hist_add(CmdlineHistoryKind::Command, "first");
+    cmdline.hist_add(CmdlineHistoryKind::Command, "second");
+    cmdline.hist_add(CmdlineHistoryKind::Command, "third");
+
+    assert_eq!(cmdline.hist_get(CmdlineHistoryKind::Command, 0), "second");
+    assert_eq!(cmdline.hist_get(CmdlineHistoryKind::Command, 1), "third");
+    assert_eq!(cmdline.hist_get(CmdlineHistoryKind::Command, -1), "third");
+}

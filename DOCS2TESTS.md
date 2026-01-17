@@ -26,7 +26,7 @@
 - 02.4 Deleting characters — Covered (partial): Delete with `x` in `vxd_tui/tests/mode_normal_spec.rs`.
 - 02.5 Undo and Redo — Covered (partial): Undo tree tests in `vxd_tui/tests/undo_spec.rs`.
 - 02.6 Other editing commands — Covered (partial): Open/append commands in `vxd_tui/tests/mode_insert_spec.rs`.
-- 02.7 Getting out — Not ported: Quit/suspend CLI behaviors not implemented in Rust.
+- 02.7 Getting out — Covered (partial): Quit/ZZ flows in `vxd_tui/src/exit.rs` and `vxd_tui/tests/exit_spec.rs`.
 - 02.8 Finding help — Not ported: Help system not implemented in Rust.
 
 ### usr_03.txt
@@ -49,7 +49,7 @@
 - 04.5 Moving text — Missing: Move text commands not tested.
 - 04.6 Copying text — Covered (partial): Yank/put register tests in `vxd_tui/tests/put_spec.rs`.
 - 04.7 Using the clipboard — Covered (partial): Register plumbing in `vxd_tui/tests/register_spec.rs` and `vxd_tui/tests/put_spec.rs`.
-- 04.8 Text objects — Missing (module exists): Text object parsing only; no behavior tests.
+- 04.8 Text objects — Covered (partial): Text object types and matching in `vxd_tui/tests/textobject_spec.rs`.
 - 04.9 Replace mode — Missing: Replace mode not tested.
 - 04.10 Conclusion — Doc-only: Chapter summary.
 
@@ -127,7 +127,7 @@
 - 20.1 Command line editing — Covered (partial): Cmdline editing in `vxd_tui/tests/cmdline_spec.rs` and `vxd_tui/tests/cmdline_completion_spec.rs`.
 - 20.2 Command line abbreviations — Covered (partial): Conceptual tests in `vxd_tui/tests/cmdline_completion_spec.rs`.
 - 20.3 Command line completion — Covered (partial): Completion types and items in `vxd_tui/tests/cmdline_completion_spec.rs`.
-- 20.4 Command line history — Covered (partial): History kinds in `vxd_tui/tests/cmdline_spec.rs` and `vxd_tui/tests/cmdline_completion_spec.rs`.
+- 20.4 Command line history — Covered (partial): History kinds and limit eviction in `vxd_tui/tests/cmdline_spec.rs` and `vxd_tui/tests/cmdline_completion_spec.rs`.
 - 20.5 Command line window — Covered (partial): Cmdwin concepts in `vxd_tui/tests/cmdline_completion_spec.rs`.
 
 ### usr_21.txt
@@ -136,16 +136,16 @@
 - 21.3 Remembering information; ShaDa — Not ported: ShaDa not implemented in Rust.
 - 21.4 Sessions — Not ported: Sessions not implemented in Rust.
 - 21.5 Views — Not ported: Views not implemented in Rust.
-- 21.6 Modelines — Not ported: Modelines not implemented in Rust.
+- 21.6 Modelines — Covered (partial): Modeline parser in `vxd/src/modeline.rs`.
 
 ### usr_22.txt
 - 22.1 The file browser — Not ported: File browser not implemented in Rust.
 - 22.2 The current directory — Missing: Current directory handling not tested.
 - 22.3 Finding a file — Missing: File finding not tested.
-- 22.4 The buffer list — Missing: Buffer list not tested.
+- 22.4 The buffer list — Covered (partial): Buffer list behaviors in `vxd_tui/tests/buffer_list_spec.rs`.
 
 ### usr_23.txt
-- 23.1 DOS, Mac and Unix files — Missing: Fileformat handling not tested.
+- 23.1 DOS, Mac and Unix files — Covered (partial): Fileformat detection/conversion in `vxd/src/fileformat.rs`.
 - 23.2 Files on the internet — Not ported: Net/internet editing not implemented in Rust.
 - 23.3 Binary files — Missing: Binary mode not tested.
 - 23.4 Compressed files — Not ported: Compressed file support not implemented in Rust.
