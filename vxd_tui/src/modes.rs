@@ -4,7 +4,7 @@
 
 use vxd::modes::{
     is_valid_transition, CtrlOMode, InvalidTransition, Mode, ModeManager, ModeState,
-    ModeTransition, VisualMode,
+    ModeTransition,
 };
 
 /// Concrete mode manager implementation
@@ -165,6 +165,7 @@ impl ModeManager for TuiModeManager {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use vxd::modes::VisualMode;
 
     #[test]
     fn test_normal_to_insert() {

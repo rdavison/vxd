@@ -164,6 +164,59 @@ impl TuiMarkManager {
     pub fn set_current_buffer(&mut self, buf: BufHandle) {
         self.current_buffer = buf;
     }
+
+    /// Push a jump entry, coalescing duplicates at the current history position.
+    pub fn push_jump(&mut self, buffer: BufHandle, position: CursorPosition) {
+        let entry = JumpEntry {
+            buffer,
+            position,
+            file: None,
+        };
+        let should_skip = if self.jump_list.position > 0 {
+            let last_index = self.jump_list.position - 1;
+            self.jump_list
+                .entries
+                .get(last_index)
+                .map(|last| last.buffer == entry.buffer && last.position == entry.position)
+                .unwrap_or(false)
+        } else {
+            false
+        };
+        if should_skip {
+            return;
+        }
+
+        self.jump_list.push(entry);
+    }
+
+    /// Jump back (Ctrl-O) and return the target cursor position.
+    pub fn jump_back(
+        &mut self,
+        _buffer: BufHandle,
+        _current: CursorPosition,
+    ) -> Option<CursorPosition> {
+        self.jump_list.go_older().map(|entry| entry.position)
+    }
+
+    /// Jump forward (Ctrl-I) and return the target cursor position.
+    pub fn jump_forward(&mut self) -> Option<CursorPosition> {
+        self.jump_list.go_newer().map(|entry| entry.position)
+    }
+
+    /// Return a copy of the current jump list entries.
+    pub fn jump_list_entries(&self) -> Vec<JumpEntry> {
+        self.jump_list.entries.clone()
+    }
+
+    /// Return the current jump list position.
+    pub fn jump_list_position(&self) -> usize {
+        self.jump_list.position()
+    }
+
+    /// Clear the jump list.
+    pub fn clear_jump_list(&mut self) {
+        self.jump_list.clear();
+    }
 }
 
 impl MarkManager for TuiMarkManager {

@@ -32,6 +32,11 @@ impl TuiRegisterBank {
     pub fn new() -> Self {
         TuiRegisterBank::default()
     }
+
+    /// Push a delete into the numbered register history (1-9).
+    pub fn push_delete(&mut self, content: RegisterContent) {
+        let _ = self.record_delete(content, false);
+    }
 }
 
 impl RegisterBank for TuiRegisterBank {

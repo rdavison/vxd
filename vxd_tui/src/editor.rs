@@ -10,7 +10,7 @@ use crate::modes::TuiModeManager;
 use crate::registers::TuiRegisterBank;
 
 use vxd::buffer::{Buffer, BufferManager};
-use vxd::cursor::{Cursor, CursorContext, VirtualEdit};
+use vxd::cursor::{Cursor, CursorContext, CursorPosition, VirtualEdit};
 use vxd::marks::MarkManager;
 use vxd::modes::{Mode, ModeManager};
 use vxd::types::{LineNr, VimError, VimResult};
@@ -55,6 +55,9 @@ impl Editor {
             .get_lines(0, -1, false)
             .unwrap_or_default();
         self.cursor.update_line_lengths(&lines);
+        let pos = self.cursor.position();
+        let ctx = self.cursor_context();
+        let _ = self.cursor.set_position(pos, &ctx);
     }
 
     /// Get cursor context based on current mode
@@ -105,7 +108,9 @@ impl Editor {
         let ctx = self.cursor_context();
         let new_line =
             LineNr((self.cursor.line().0 + count).min(self.buffers.current().line_count()));
-        self.cursor.set_line(new_line, &ctx)?;
+        let want_col = self.cursor.curswant().value();
+        self.cursor
+            .set_position(CursorPosition::new(new_line, want_col), &ctx)?;
         self.sync_cursor_with_buffer();
         Ok(())
     }
@@ -114,7 +119,9 @@ impl Editor {
     pub fn cursor_up(&mut self, count: usize) -> VimResult<()> {
         let ctx = self.cursor_context();
         let new_line = LineNr(self.cursor.line().0.saturating_sub(count).max(1));
-        self.cursor.set_line(new_line, &ctx)?;
+        let want_col = self.cursor.curswant().value();
+        self.cursor
+            .set_position(CursorPosition::new(new_line, want_col), &ctx)?;
         self.sync_cursor_with_buffer();
         Ok(())
     }

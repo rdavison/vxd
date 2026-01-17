@@ -24,6 +24,7 @@
 //! - `marks` - Mark system (local and global marks)
 //! - `search` - Search and pattern matching
 //! - `commands` - Ex command system
+//! - `cmdline` - Command-line UI/history behaviors
 //! - `options` - Option/setting system
 //! - `autocmd` - Autocommand event system
 //! - `windows` - Window management
@@ -74,6 +75,9 @@ pub mod search;
 
 #[cfg(feature = "commands")]
 pub mod commands;
+
+#[cfg(feature = "cmdline")]
+pub mod cmdline;
 
 #[cfg(feature = "options")]
 pub mod options;
@@ -136,6 +140,9 @@ pub mod prelude {
 
     #[cfg(feature = "commands")]
     pub use crate::commands::CommandExecutor;
+
+    #[cfg(feature = "cmdline")]
+    pub use crate::cmdline::{Cmdline, CmdlineHistory, CmdlineHistoryKind};
 
     #[cfg(feature = "options")]
     pub use crate::options::OptionManager;

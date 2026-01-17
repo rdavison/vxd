@@ -8,6 +8,7 @@
 
 pub mod buffer;
 pub mod cursor;
+pub mod cmdline;
 pub mod editor;
 pub mod marks;
 pub mod modes;

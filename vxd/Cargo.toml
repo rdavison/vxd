@@ -20,6 +20,7 @@ search = ["buffer", "cursor"]
 
 # Command system
 commands = ["buffer"]
+cmdline = ["commands", "registers"]
 
 # Configuration
 options = []
@@ -42,7 +43,7 @@ textobjects = ["buffer", "cursor"]
 all = [
     "buffer", "cursor", "modes", "motions", "operators",
     "registers", "marks", "search", "commands", "options",
-    "autocmd", "windows", "tabs", "folds", "completion",
+    "cmdline", "autocmd", "windows", "tabs", "folds", "completion",
     "undo", "visual", "textobjects"
 ]
 

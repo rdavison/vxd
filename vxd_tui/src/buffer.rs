@@ -174,7 +174,7 @@ impl Buffer for TuiBuffer {
         let end_idx = end_idx.max(start_idx).min(len);
 
         // Replace the lines
-        let before: Vec<String> = self.lines.drain(start_idx..end_idx).collect();
+        let _before: Vec<String> = self.lines.drain(start_idx..end_idx).collect();
         for (i, line) in replacement.into_iter().enumerate() {
             self.lines.insert(start_idx + i, line);
         }
