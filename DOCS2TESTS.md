@@ -157,7 +157,7 @@
 - 24.4 Repeating an insert — Covered (partial): Repeat insert via Ctrl-A in `vxd_tui/tests/mode_insert_spec.rs`.
 - 24.5 Copying from another line — Covered (partial): Ctrl-Y/Ctrl-E copy in `vxd_tui/tests/mode_insert_spec.rs`.
 - 24.6 Inserting a register — Covered (partial): Register content tests in `vxd_tui/tests/register_spec.rs`.
-- 24.7 Abbreviations — Missing: Insert-mode abbreviations not tested.
+- 24.7 Abbreviations — Covered (partial): Insert-mode abbreviations tests in `vxd_tui/tests/abbreviation_spec.rs`.
 - 24.8 Entering special characters — Covered (partial): Special chars/unicode in `vxd_tui/tests/mode_insert_spec.rs`.
 - 24.9 Digraphs — Covered (partial): Digraph table tests in `vxd/src/digraphs.rs`.
 - 24.10 Normal mode commands — Covered (partial): Normal-mode commands exercised in `vxd_tui/tests/mode_normal_spec.rs`.
@@ -297,3 +297,4 @@
 - ~~Add cmdline completion/history/window tests in `vxd_tui` (sections 20.1-20.5).~~ Done: `vxd_tui/tests/cmdline_completion_spec.rs` (62 tests)
 - ~~Add folding behavior tests in `vxd` (sections 28.1-28.9).~~ Done: `vxd_tui/tests/fold_spec.rs` (35 tests)
 - ~~Add visual block mode behavior tests in `vxd_tui` (section 10.5).~~ Done: `vxd_tui/tests/visual_block_spec.rs` (15 tests)
+- ~~Add insert-mode abbreviation tests in `vxd_tui` (section 24.7).~~ Done: `vxd_tui/tests/abbreviation_spec.rs` (4 tests)

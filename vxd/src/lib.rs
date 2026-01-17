@@ -161,6 +161,9 @@ pub mod digraphs;
 #[cfg(feature = "mappings")]
 pub mod mappings;
 
+#[cfg(feature = "abbreviations")]
+pub mod abbreviations;
+
 // ============================================================================
 // Prelude - convenient imports for implementors
 // ============================================================================

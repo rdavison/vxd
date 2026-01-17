@@ -9,6 +9,7 @@ use crate::marks::TuiMarkManager;
 use crate::modes::TuiModeManager;
 use crate::registers::TuiRegisterBank;
 
+use vxd::abbreviations::{AbbreviationManager, SimpleAbbreviationManager};
 use vxd::buffer::{Buffer, BufferManager};
 use vxd::cursor::{Cursor, CursorContext, CursorPosition, VirtualEdit};
 use vxd::marks::MarkManager;
@@ -16,7 +17,6 @@ use vxd::modes::{Mode, ModeManager, VisualMode};
 use vxd::motions::CharFindMotion;
 use vxd::registers::{Register, RegisterBank, RegisterContent, RegisterType};
 use vxd::types::{LineNr, VimError, VimResult};
-use vxd::visual::BlockSelection;
 
 /// The main editor struct combining all components
 #[derive(Debug)]
@@ -31,6 +31,8 @@ pub struct Editor {
     pub registers: TuiRegisterBank,
     /// Mark manager
     pub marks: TuiMarkManager,
+    /// Abbreviation manager
+    pub abbreviations: SimpleAbbreviationManager,
     /// Visual selection anchor
     pub visual_anchor: Option<CursorPosition>,
     last_char_find: Option<CharFindMotion>,
@@ -55,6 +57,7 @@ impl Editor {
             modes: TuiModeManager::new(),
             registers: TuiRegisterBank::new(),
             marks: TuiMarkManager::new(),
+            abbreviations: SimpleAbbreviationManager::new(),
             visual_anchor: None,
             last_char_find: None,
             current_insert: None,
@@ -240,8 +243,49 @@ impl Editor {
         Ok(())
     }
 
-    /// Insert text at cursor position
+    /// Insert text at cursor position (checks for abbreviations)
     pub fn insert_char(&mut self, c: char) -> VimResult<()> {
+        if !self.modes.mode().allows_insertion() {
+            return Ok(()); // Ignore in non-insert modes
+        }
+
+        // Check for abbreviations (only on non-keyword chars)
+        // Simplified keyword check: alphanumeric or underscore
+        if !c.is_alphanumeric() && c != '_' {
+            let current_line = self.current_line();
+            let col = self.cursor.col();
+            if let Some((word, start_col)) = self.get_word_before_cursor(&current_line, col) {
+                // Check if an abbreviation exists and clone the RHS to avoid borrow issues
+                let expansion = self.abbreviations.check(self.modes.mode(), &word).map(|a| a.rhs.clone());
+                
+                if let Some(rhs) = expansion {
+                    // Remove the abbreviation
+                    // Move cursor to start of word
+                    let ctx = self.cursor_context();
+                    self.cursor.set_col(start_col, &ctx)?;
+                    
+                    // Delete the word
+                    for _ in 0..word.len() {
+                        self.delete_char()?;
+                    }
+                    
+                    // Insert the expansion (raw, to avoid recursive expansion loops immediately)
+                    // Note: Vim allows remapping in expansion, but here we just insert text.
+                    // If 'noremap' is false, we might need to feed keys? 
+                    // For now, let's just insert text raw.
+                    self.insert_text_raw(&rhs)?;
+                    
+                    // Insert the triggering character
+                    return self.insert_char_raw(c);
+                }
+            }
+        }
+
+        self.insert_char_raw(c)
+    }
+
+    /// Insert text at cursor position without checking for abbreviations
+    pub fn insert_char_raw(&mut self, c: char) -> VimResult<()> {
         if !self.modes.mode().allows_insertion() {
             return Ok(()); // Ignore in non-insert modes
         }
@@ -286,6 +330,34 @@ impl Editor {
         Ok(())
     }
 
+    /// Get word before cursor for abbreviation checking
+    fn get_word_before_cursor(&self, line: &str, col: usize) -> Option<(String, usize)> {
+        if col == 0 || col > line.len() {
+            return None;
+        }
+
+        let text_before = &line[..col];
+        // Find end of last non-keyword char
+        // Keyword chars: alphanumeric + '_'
+        let last_non_keyword = text_before.rfind(|c: char| !c.is_alphanumeric() && c != '_');
+        
+        let start = match last_non_keyword {
+            Some(idx) => idx + 1, // Start after the non-keyword
+            None => 0, // Start of line
+        };
+
+        if start >= col {
+            return None; // No word
+        }
+
+        let word = text_before[start..col].to_string();
+        if word.is_empty() {
+            None
+        } else {
+            Some((word, start))
+        }
+    }
+
     /// Insert a character from a nearby line (Ctrl-Y/Ctrl-E behavior).
     pub fn insert_from_adjacent_line(&mut self, line_offset: i64) -> VimResult<()> {
         if !self.modes.mode().allows_insertion() {
@@ -310,7 +382,7 @@ impl Editor {
         }
 
         if let Some(ch) = source_line[col..].chars().next() {
-            self.insert_char(ch)?;
+            self.insert_char_raw(ch)?;
         }
 
         Ok(())
@@ -447,6 +519,17 @@ impl Editor {
                 self.insert_newline()?;
             } else {
                 self.insert_char(ch)?;
+            }
+        }
+        Ok(())
+    }
+
+    pub fn insert_text_raw(&mut self, text: &str) -> VimResult<()> {
+        for ch in text.chars() {
+            if ch == '\n' {
+                self.insert_newline()?;
+            } else {
+                self.insert_char_raw(ch)?;
             }
         }
         Ok(())
