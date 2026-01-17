@@ -276,6 +276,12 @@ impl TestHarness {
                     let _ = self.editor.insert_text(&content.as_string());
                 }
             }
+            Key::Ctrl('y') => {
+                let _ = self.editor.insert_from_adjacent_line(-1);
+            }
+            Key::Ctrl('e') => {
+                let _ = self.editor.insert_from_adjacent_line(1);
+            }
             Key::Char(c) => {
                 let _ = self.editor.insert_char(c);
             }

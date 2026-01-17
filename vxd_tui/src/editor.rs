@@ -212,6 +212,36 @@ impl Editor {
         Ok(())
     }
 
+    /// Insert a character from a nearby line (Ctrl-Y/Ctrl-E behavior).
+    pub fn insert_from_adjacent_line(&mut self, line_offset: i64) -> VimResult<()> {
+        if !self.modes.mode().allows_insertion() {
+            return Ok(());
+        }
+
+        let line_count = self.buffers.current().line_count() as i64;
+        let current_idx = self.cursor.line().0 as i64 - 1;
+        let target_idx = current_idx + line_offset;
+        if target_idx < 0 || target_idx >= line_count {
+            return Ok(());
+        }
+
+        let source_line = self
+            .buffers
+            .current()
+            .get_line(target_idx)
+            .unwrap_or_default();
+        let col = self.cursor.col();
+        if col >= source_line.len() {
+            return Ok(());
+        }
+
+        if let Some(ch) = source_line[col..].chars().next() {
+            self.insert_char(ch)?;
+        }
+
+        Ok(())
+    }
+
     /// Delete character at cursor position (like 'x' command)
     pub fn delete_char(&mut self) -> VimResult<()> {
         let line_idx = self.cursor.line().0 as i64 - 1;

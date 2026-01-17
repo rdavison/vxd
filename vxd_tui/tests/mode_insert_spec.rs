@@ -205,6 +205,30 @@ fn test_repeat_insert_ctrl_a() {
     assert_eq!(h.get_lines(), vec!["abc", "abc"]);
 }
 
+/// Test: copy from line above with Ctrl-Y
+/// Source: usr_24.txt (copying from another line)
+#[test]
+fn test_copy_from_line_above_ctrl_y() {
+    let mut h = TestHarness::new();
+    h.set_lines(&["alpha", "-----", "bravo"]);
+    h.set_cursor(2, 1);
+
+    h.feed("i<C-y><Esc>");
+    assert_eq!(h.get_lines(), vec!["alpha", "-l----", "bravo"]);
+}
+
+/// Test: copy from line below with Ctrl-E
+/// Source: usr_24.txt (copying from another line)
+#[test]
+fn test_copy_from_line_below_ctrl_e() {
+    let mut h = TestHarness::new();
+    h.set_lines(&["alpha", "-----", "bravo"]);
+    h.set_cursor(2, 2);
+
+    h.feed("i<C-e><Esc>");
+    assert_eq!(h.get_lines(), vec!["alpha", "--a---", "bravo"]);
+}
+
 /// Test: cursor movement in insert mode with arrow keys
 /// Source: mode_insert_spec.lua (arrow key movement)
 #[test]

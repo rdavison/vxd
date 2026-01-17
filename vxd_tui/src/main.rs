@@ -228,6 +228,14 @@ impl App {
                     }
                     return;
                 }
+                if modifiers.contains(KeyModifiers::CONTROL) && c == 'y' {
+                    let _ = self.editor.insert_from_adjacent_line(-1);
+                    return;
+                }
+                if modifiers.contains(KeyModifiers::CONTROL) && c == 'e' {
+                    let _ = self.editor.insert_from_adjacent_line(1);
+                    return;
+                }
                 let _ = self.editor.insert_char(c);
             }
 

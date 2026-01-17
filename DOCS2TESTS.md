@@ -155,7 +155,7 @@
 - 24.2 Showing matches — Covered (partial): Bracket matching helper in `vxd/src/showmatch.rs`.
 - 24.3 Completion — Covered (partial): Buffer/line completion engine tests in `vxd/src/completion.rs`.
 - 24.4 Repeating an insert — Covered (partial): Repeat insert via Ctrl-A in `vxd_tui/tests/mode_insert_spec.rs`.
-- 24.5 Copying from another line — Missing: Copy from another line not tested.
+- 24.5 Copying from another line — Covered (partial): Ctrl-Y/Ctrl-E copy in `vxd_tui/tests/mode_insert_spec.rs`.
 - 24.6 Inserting a register — Covered (partial): Register content tests in `vxd_tui/tests/register_spec.rs`.
 - 24.7 Abbreviations — Missing: Insert-mode abbreviations not tested.
 - 24.8 Entering special characters — Covered (partial): Special chars/unicode in `vxd_tui/tests/mode_insert_spec.rs`.
