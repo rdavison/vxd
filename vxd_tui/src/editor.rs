@@ -277,6 +277,39 @@ impl Editor {
         self.last_char_find = Some(actual_motion);
         Ok(true)
     }
+
+    pub fn match_bracket(&mut self) -> VimResult<bool> {
+        let line = self.current_line();
+        let col = self.cursor.col();
+        let ch = match char_at(&line, col) {
+            Some(ch) => ch,
+            None => return Ok(false),
+        };
+        let (open, close, forward) = match ch {
+            '(' => ('(', ')', true),
+            '[' => ('[', ']', true),
+            '{' => ('{', '}', true),
+            ')' => ('(', ')', false),
+            ']' => ('[', ']', false),
+            '}' => ('{', '}', false),
+            _ => return Ok(false),
+        };
+
+        let target_col = if forward {
+            find_matching_forward(&line, col, open, close)
+        } else {
+            find_matching_backward(&line, col, open, close)
+        };
+
+        if let Some(target) = target_col {
+            let ctx = self.cursor_context();
+            self.cursor.set_col(target, &ctx)?;
+            self.cursor.update_curswant();
+            return Ok(true);
+        }
+
+        Ok(false)
+    }
 }
 
 fn invert_char_find(motion: CharFindMotion) -> CharFindMotion {
@@ -353,6 +386,46 @@ fn previous_char_index(line: &str, idx: usize) -> Option<usize> {
         prev = Some(pos);
     }
     prev
+}
+
+fn char_at(line: &str, col: usize) -> Option<char> {
+    line.get(col..)?.chars().next()
+}
+
+fn find_matching_forward(line: &str, col: usize, open: char, close: char) -> Option<usize> {
+    let mut depth = 0usize;
+    for (idx, ch) in line.char_indices() {
+        if idx < col {
+            continue;
+        }
+        if ch == open {
+            depth += 1;
+        } else if ch == close {
+            depth = depth.saturating_sub(1);
+            if depth == 0 {
+                return Some(idx);
+            }
+        }
+    }
+    None
+}
+
+fn find_matching_backward(line: &str, col: usize, open: char, close: char) -> Option<usize> {
+    let mut depth = 0usize;
+    for (idx, ch) in line.char_indices() {
+        if idx > col {
+            break;
+        }
+        if ch == close {
+            depth += 1;
+        } else if ch == open {
+            depth = depth.saturating_sub(1);
+            if depth == 0 {
+                return Some(idx);
+            }
+        }
+    }
+    None
 }
 
 impl Default for Editor {

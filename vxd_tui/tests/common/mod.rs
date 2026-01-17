@@ -255,6 +255,9 @@ impl TestHarness {
             Key::Char(',') => {
                 let _ = self.editor.find_char(CharFindMotion::RepeatBackward);
             }
+            Key::Char('%') => {
+                let _ = self.editor.match_bracket();
+            }
             _ => {}
         }
     }

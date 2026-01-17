@@ -33,10 +33,10 @@
 - 03.1 Word movement — Covered (partial): Word motion types in `vxd_tui/tests/operator_spec.rs`.
 - 03.2 Moving to the start or end of a line — Covered (partial): Line start/end in `vxd_tui/tests/cursor_spec.rs`.
 - 03.3 Moving to a character — Covered (partial): Character find motions in `vxd_tui/tests/char_find_spec.rs`.
-- 03.4 Matching a parenthesis — Missing: Match parentheses not tested.
+- 03.4 Matching a parenthesis — Covered (partial): `%` matching in `vxd_tui/tests/match_bracket_spec.rs`.
 - 03.5 Moving to a specific line — Covered (partial): Line jumps (`G`, `gg`) in `vxd_tui/tests/cursor_spec.rs`.
-- 03.6 Telling where you are — Missing: Position reporting not tested.
-- 03.7 Scrolling around — Missing: Scrolling behavior not tested.
+- 03.6 Telling where you are — Covered (partial): Position info helpers in `vxd/src/position.rs`.
+- 03.7 Scrolling around — Covered (partial): Scroll topline helper in `vxd/src/scroll.rs`.
 - 03.8 Simple searches — Covered (partial): Search tests in `vxd_tui/tests/search_spec.rs`.
 - 03.9 Simple search patterns — Covered (partial): Pattern tests in `vxd_tui/tests/search_spec.rs`.
 - 03.10 Using marks — Covered (partial): Marks and jumps in `vxd_tui/tests/mark_spec.rs`.
@@ -61,7 +61,7 @@
 - 05.5 Adding a plugin — Not ported: Plugin system not implemented in Rust.
 - 05.6 Adding a help file — Not ported: Help tags not implemented in Rust.
 - 05.7 The option window — Not ported: Option window UI not implemented in Rust.
-- 05.8 Often used options — Missing (module exists): Options types only in `vxd/src/options.rs`.
+- 05.8 Often used options — Covered (partial): Option manager tests in `vxd/src/options.rs`.
 
 ### usr_06.txt
 - 06.1 Switching it on — Not ported: Syntax highlighting/colors not implemented in Rust.

@@ -210,6 +210,80 @@ pub trait OptionManager {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
+
+    struct TestOptions {
+        values: HashMap<String, OptionValue>,
+        defs: Vec<OptionDef>,
+    }
+
+    impl TestOptions {
+        fn new(defs: Vec<OptionDef>) -> Self {
+            let values = defs
+                .iter()
+                .map(|def| (def.name.clone(), def.default.clone()))
+                .collect();
+            Self { values, defs }
+        }
+    }
+
+    impl OptionManager for TestOptions {
+        fn get(&self, name: &str) -> Option<&OptionValue> {
+            self.values.get(name)
+        }
+
+        fn set(&mut self, name: &str, value: OptionValue) -> VimResult<()> {
+            self.values.insert(name.to_string(), value);
+            Ok(())
+        }
+
+        fn reset(&mut self, name: &str) -> VimResult<()> {
+            let def = self
+                .defs
+                .iter()
+                .find(|def| def.name == name)
+                .ok_or_else(|| VimError::CommandFailed("unknown option".into()))?;
+            self.values.insert(name.to_string(), def.default.clone());
+            Ok(())
+        }
+
+        fn definitions(&self) -> Vec<&OptionDef> {
+            self.defs.iter().collect()
+        }
+
+        fn definition(&self, name: &str) -> Option<&OptionDef> {
+            self.defs.iter().find(|def| def.name == name)
+        }
+    }
+
+    fn test_defs() -> Vec<OptionDef> {
+        vec![
+            OptionDef {
+                name: "number".to_string(),
+                short_name: Some("nu".to_string()),
+                scope: OptionScope::Window,
+                default: OptionValue::Boolean(false),
+                hidden: false,
+                description: "Show line numbers".to_string(),
+            },
+            OptionDef {
+                name: "tabstop".to_string(),
+                short_name: Some("ts".to_string()),
+                scope: OptionScope::Buffer,
+                default: OptionValue::Number(8),
+                hidden: false,
+                description: "Number of spaces a tab counts for".to_string(),
+            },
+            OptionDef {
+                name: "fileformat".to_string(),
+                short_name: Some("ff".to_string()),
+                scope: OptionScope::Buffer,
+                default: OptionValue::String("unix".to_string()),
+                hidden: false,
+                description: "File format".to_string(),
+            },
+        ]
+    }
 
     #[test]
     fn test_option_value_types() {
@@ -223,6 +297,43 @@ mod tests {
 
         let str_val = OptionValue::String("test".into());
         assert_eq!(str_val.as_str(), Some("test"));
+    }
+
+    #[test]
+    fn test_option_accessors() {
+        let mut options = TestOptions::new(test_defs());
+        assert_eq!(options.get_bool("number"), Some(false));
+        options.set_bool("number", true).unwrap();
+        assert_eq!(options.get_bool("number"), Some(true));
+
+        assert_eq!(options.get_number("tabstop"), Some(8));
+        options.set_number("tabstop", 4).unwrap();
+        assert_eq!(options.get_number("tabstop"), Some(4));
+
+        assert_eq!(options.get_string("fileformat"), Some("unix"));
+        options
+            .set_string("fileformat", "dos".to_string())
+            .unwrap();
+        assert_eq!(options.get_string("fileformat"), Some("dos"));
+    }
+
+    #[test]
+    fn test_option_toggle_and_reset() {
+        let mut options = TestOptions::new(test_defs());
+        assert_eq!(options.toggle("number").unwrap(), true);
+        assert_eq!(options.get_bool("number"), Some(true));
+
+        options.reset("number").unwrap();
+        assert_eq!(options.get_bool("number"), Some(false));
+    }
+
+    #[test]
+    fn test_option_definitions() {
+        let options = TestOptions::new(test_defs());
+        let defs = options.definitions();
+        assert_eq!(defs.len(), 3);
+        assert_eq!(defs[0].name, "number");
+        assert_eq!(defs[1].scope, OptionScope::Buffer);
     }
 
     #[allow(dead_code)]

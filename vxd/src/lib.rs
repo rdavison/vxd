@@ -115,6 +115,12 @@ pub mod suspend;
 #[cfg(feature = "modeline")]
 pub mod modeline;
 
+#[cfg(feature = "position")]
+pub mod position;
+
+#[cfg(feature = "scroll")]
+pub mod scroll;
+
 #[cfg(feature = "autocmd")]
 pub mod autocmd;
 
@@ -212,6 +218,12 @@ pub mod prelude {
 
     #[cfg(feature = "modeline")]
     pub use crate::modeline::ModelineSetting;
+
+    #[cfg(feature = "position")]
+    pub use crate::position::{position_info, PositionInfo};
+
+    #[cfg(feature = "scroll")]
+    pub use crate::scroll::{scroll_topline, ScrollDirection};
 
     #[cfg(feature = "autocmd")]
     pub use crate::autocmd::AutocmdManager;

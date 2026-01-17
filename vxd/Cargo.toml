@@ -35,6 +35,8 @@ filebrowser = []
 recipes = []
 suspend = []
 modeline = ["options"]
+position = ["cursor"]
+scroll = []
 
 # Event system
 autocmd = []
@@ -56,7 +58,7 @@ all = [
     "registers", "marks", "search", "commands", "options",
     "fileformat", "cwd", "modeline", "cmdline", "autocmd", "windows", "tabs", "folds",
     "filefinder", "fileedit", "binary", "completion", "undo", "visual", "textobjects",
-    "backup", "recovery", "filebrowser", "recipes", "suspend"
+    "backup", "recovery", "filebrowser", "recipes", "suspend", "position", "scroll"
 ]
 
 [dev-dependencies]
