@@ -56,7 +56,7 @@
 ### usr_05.txt
 - 05.1 The vimrc file — Not ported: vimrc loading not implemented in Rust.
 - 05.2 Example vimrc contents — Doc-only: Example config content.
-- 05.3 Simple mappings — Missing: Mappings not implemented in Rust.
+- 05.3 Simple mappings — Missing (module exists): Mappings module created in `vxd/src/mappings.rs`.
 - 05.4 Adding a package — Not ported: Package loading not implemented in Rust.
 - 05.5 Adding a plugin — Not ported: Plugin system not implemented in Rust.
 - 05.6 Adding a help file — Not ported: Help tags not implemented in Rust.

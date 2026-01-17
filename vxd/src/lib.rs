@@ -158,6 +158,8 @@ pub mod textobjects;
 #[cfg(feature = "digraphs")]
 pub mod digraphs;
 
+pub mod mappings;
+
 // ============================================================================
 // Prelude - convenient imports for implementors
 // ============================================================================
