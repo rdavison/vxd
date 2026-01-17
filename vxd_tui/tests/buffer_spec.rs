@@ -125,6 +125,29 @@ fn test_cursor_unchanged_when_overwriting_current_line() {
     assert_eq!(h.cursor(), (3, 2));
 }
 
+/// Test: buffer name can be changed
+/// Source: :file {newname}
+#[test]
+fn test_buffer_name_changes() {
+    let mut h = TestHarness::new();
+
+    assert_eq!(h.editor.buffers.current().name(), "");
+
+    h.editor
+        .buffers
+        .current_mut()
+        .set_name("one.txt")
+        .unwrap();
+    assert_eq!(h.editor.buffers.current().name(), "one.txt");
+
+    h.editor
+        .buffers
+        .current_mut()
+        .set_name("two.txt")
+        .unwrap();
+    assert_eq!(h.editor.buffers.current().name(), "two.txt");
+}
+
 /// Test: get_lines returns correct content
 /// Source: buffer_spec.lua (various)
 #[test]

@@ -77,7 +77,7 @@
 - 07.4 Backup files — Covered (partial): Backup path helper in `vxd/src/backup.rs`.
 - 07.5 Copy text between files — Missing: Copy across files not tested.
 - 07.6 Viewing a file — Covered (partial): View-only modifiable test in `vxd_tui/tests/view_spec.rs`.
-- 07.7 Changing the file name — Missing: Renaming/writing new files not tested.
+- 07.7 Changing the file name — Covered (partial): Buffer renaming in `vxd_tui/tests/buffer_spec.rs`.
 
 ### usr_08.txt
 - 08.1 Split a window — Covered (partial): Window splitting basics in `vxd_tui/tests/window_spec.rs`.
