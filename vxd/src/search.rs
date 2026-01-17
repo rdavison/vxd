@@ -225,6 +225,53 @@ pub struct SubstituteSpec {
     pub range: Option<LineRange>,
 }
 
+/// Apply a substitute operation to the given lines.
+pub fn apply_substitute(
+    lines: &[String],
+    spec: &SubstituteSpec,
+    use_last_pattern: Option<&str>,
+) -> VimResult<Vec<String>> {
+    let pattern = if spec.flags.use_last_pattern {
+        use_last_pattern.unwrap_or("").to_string()
+    } else {
+        spec.pattern.clone()
+    };
+
+    if pattern.is_empty() {
+        return Err(VimError::Error(486, "Pattern not found".to_string()));
+    }
+
+    let start = spec.range.map(|r| r.start.0 - 1).unwrap_or(0);
+    let end = spec
+        .range
+        .map(|r| r.end.0)
+        .unwrap_or(lines.len())
+        .min(lines.len());
+
+    let mut out = lines.to_vec();
+    for idx in start..end {
+        if let Some(line) = out.get_mut(idx) {
+            *line = substitute_line(line, &pattern, &spec.replacement, spec.flags.global);
+        }
+    }
+
+    Ok(out)
+}
+
+fn substitute_line(line: &str, pattern: &str, replacement: &str, global: bool) -> String {
+    if global {
+        line.replace(pattern, replacement)
+    } else if let Some(pos) = line.find(pattern) {
+        let mut out = String::new();
+        out.push_str(&line[..pos]);
+        out.push_str(replacement);
+        out.push_str(&line[pos + pattern.len()..]);
+        out
+    } else {
+        line.to_string()
+    }
+}
+
 // ============================================================================
 // Tests
 // ============================================================================
@@ -241,6 +288,73 @@ mod tests {
 
         let bwd = SearchPattern::backward("test");
         assert_eq!(bwd.direction, Direction::Backward);
+    }
+
+    #[test]
+    fn test_substitute_first_match_only() {
+        let lines = vec!["one one".to_string()];
+        let spec = SubstituteSpec {
+            pattern: "one".to_string(),
+            replacement: "two".to_string(),
+            flags: SubstituteFlags::default(),
+            range: None,
+        };
+
+        let out = apply_substitute(&lines, &spec, None).unwrap();
+        assert_eq!(out, vec!["two one".to_string()]);
+    }
+
+    #[test]
+    fn test_substitute_global() {
+        let lines = vec!["one one".to_string()];
+        let mut flags = SubstituteFlags::default();
+        flags.global = true;
+        let spec = SubstituteSpec {
+            pattern: "one".to_string(),
+            replacement: "two".to_string(),
+            flags,
+            range: None,
+        };
+
+        let out = apply_substitute(&lines, &spec, None).unwrap();
+        assert_eq!(out, vec!["two two".to_string()]);
+    }
+
+    #[test]
+    fn test_substitute_range() {
+        let lines = vec![
+            "one".to_string(),
+            "one".to_string(),
+            "one".to_string(),
+        ];
+        let spec = SubstituteSpec {
+            pattern: "one".to_string(),
+            replacement: "two".to_string(),
+            flags: SubstituteFlags::default(),
+            range: Some(LineRange::new(LineNr(2), LineNr(2))),
+        };
+
+        let out = apply_substitute(&lines, &spec, None).unwrap();
+        assert_eq!(
+            out,
+            vec!["one".to_string(), "two".to_string(), "one".to_string()]
+        );
+    }
+
+    #[test]
+    fn test_substitute_uses_last_pattern() {
+        let lines = vec!["alpha beta".to_string()];
+        let mut flags = SubstituteFlags::default();
+        flags.use_last_pattern = true;
+        let spec = SubstituteSpec {
+            pattern: "".to_string(),
+            replacement: "omega".to_string(),
+            flags,
+            range: None,
+        };
+
+        let out = apply_substitute(&lines, &spec, Some("beta")).unwrap();
+        assert_eq!(out, vec!["alpha omega".to_string()]);
     }
 
     #[allow(dead_code)]

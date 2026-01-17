@@ -13,6 +13,7 @@ use vxd::buffer::{Buffer, BufferManager};
 use vxd::cursor::{Cursor, CursorContext, CursorPosition, VirtualEdit};
 use vxd::marks::MarkManager;
 use vxd::modes::{Mode, ModeManager};
+use vxd::motions::CharFindMotion;
 use vxd::types::{LineNr, VimError, VimResult};
 
 /// The main editor struct combining all components
@@ -28,6 +29,7 @@ pub struct Editor {
     pub registers: TuiRegisterBank,
     /// Mark manager
     pub marks: TuiMarkManager,
+    last_char_find: Option<CharFindMotion>,
 }
 
 impl Editor {
@@ -39,6 +41,7 @@ impl Editor {
             modes: TuiModeManager::new(),
             registers: TuiRegisterBank::new(),
             marks: TuiMarkManager::new(),
+            last_char_find: None,
         };
 
         // Sync cursor with initial buffer
@@ -247,6 +250,109 @@ impl Editor {
 
         Ok(())
     }
+
+    pub fn find_char(&mut self, motion: CharFindMotion) -> VimResult<bool> {
+        let actual_motion = match motion {
+            CharFindMotion::RepeatForward => match self.last_char_find {
+                Some(last) => last,
+                None => return Ok(false),
+            },
+            CharFindMotion::RepeatBackward => match self.last_char_find {
+                Some(last) => invert_char_find(last),
+                None => return Ok(false),
+            },
+            other => other,
+        };
+
+        let line = self.current_line();
+        let col = self.cursor.col();
+        let target_col = match char_find_target(&line, col, actual_motion) {
+            Some(idx) => idx,
+            None => return Ok(false),
+        };
+
+        let ctx = self.cursor_context();
+        self.cursor.set_col(target_col, &ctx)?;
+        self.cursor.update_curswant();
+        self.last_char_find = Some(actual_motion);
+        Ok(true)
+    }
+}
+
+fn invert_char_find(motion: CharFindMotion) -> CharFindMotion {
+    match motion {
+        CharFindMotion::FindForward(c) => CharFindMotion::FindBackward(c),
+        CharFindMotion::FindBackward(c) => CharFindMotion::FindForward(c),
+        CharFindMotion::TillForward(c) => CharFindMotion::TillBackward(c),
+        CharFindMotion::TillBackward(c) => CharFindMotion::TillForward(c),
+        other => other,
+    }
+}
+
+fn char_find_target(line: &str, col: usize, motion: CharFindMotion) -> Option<usize> {
+    match motion {
+        CharFindMotion::FindForward(target) => {
+            let start = next_char_index(line, col)?;
+            find_forward(line, start, target)
+        }
+        CharFindMotion::FindBackward(target) => find_backward(line, col, target),
+        CharFindMotion::TillForward(target) => {
+            let start = next_char_index(line, col)?;
+            let idx = find_forward(line, start, target)?;
+            previous_char_index(line, idx)
+        }
+        CharFindMotion::TillBackward(target) => {
+            let idx = find_backward(line, col, target)?;
+            let after = next_char_index(line, idx)?;
+            if after >= line.len() {
+                None
+            } else {
+                Some(after)
+            }
+        }
+        CharFindMotion::RepeatForward | CharFindMotion::RepeatBackward => None,
+    }
+}
+
+fn find_forward(line: &str, start: usize, target: char) -> Option<usize> {
+    for (idx, ch) in line.char_indices() {
+        if idx < start {
+            continue;
+        }
+        if ch == target {
+            return Some(idx);
+        }
+    }
+    None
+}
+
+fn find_backward(line: &str, before: usize, target: char) -> Option<usize> {
+    let mut found = None;
+    for (idx, ch) in line.char_indices() {
+        if idx >= before {
+            break;
+        }
+        if ch == target {
+            found = Some(idx);
+        }
+    }
+    found
+}
+
+fn next_char_index(line: &str, idx: usize) -> Option<usize> {
+    let ch = line.get(idx..)?.chars().next()?;
+    Some(idx + ch.len_utf8())
+}
+
+fn previous_char_index(line: &str, idx: usize) -> Option<usize> {
+    let mut prev = None;
+    for (pos, _) in line.char_indices() {
+        if pos >= idx {
+            break;
+        }
+        prev = Some(pos);
+    }
+    prev
 }
 
 impl Default for Editor {

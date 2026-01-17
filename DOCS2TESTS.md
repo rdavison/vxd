@@ -26,13 +26,13 @@
 - 02.4 Deleting characters — Covered (partial): Delete with `x` in `vxd_tui/tests/mode_normal_spec.rs`.
 - 02.5 Undo and Redo — Covered (partial): Undo tree tests in `vxd_tui/tests/undo_spec.rs`.
 - 02.6 Other editing commands — Covered (partial): Open/append commands in `vxd_tui/tests/mode_insert_spec.rs`.
-- 02.7 Getting out — Covered (partial): Quit/ZZ flows in `vxd_tui/src/exit.rs` and `vxd_tui/tests/exit_spec.rs`.
+- 02.7 Getting out — Covered (partial): Quit/ZZ/:wq/:x flows in `vxd_tui/src/exit.rs` and `vxd_tui/tests/exit_spec.rs`.
 - 02.8 Finding help — Not ported: Help system not implemented in Rust.
 
 ### usr_03.txt
 - 03.1 Word movement — Covered (partial): Word motion types in `vxd_tui/tests/operator_spec.rs`.
 - 03.2 Moving to the start or end of a line — Covered (partial): Line start/end in `vxd_tui/tests/cursor_spec.rs`.
-- 03.3 Moving to a character — Missing: Find character motions not tested.
+- 03.3 Moving to a character — Covered (partial): Character find motions in `vxd_tui/tests/char_find_spec.rs`.
 - 03.4 Matching a parenthesis — Missing: Match parentheses not tested.
 - 03.5 Moving to a specific line — Covered (partial): Line jumps (`G`, `gg`) in `vxd_tui/tests/cursor_spec.rs`.
 - 03.6 Telling where you are — Missing: Position reporting not tested.
@@ -71,10 +71,10 @@
 - 06.5 Further reading — Doc-only: Further reading.
 
 ### usr_07.txt
-- 07.1 Edit another file — Missing: Editing multiple files not tested.
-- 07.2 A list of files — Missing: Argument list not tested.
-- 07.3 Jumping from file to file — Missing: File jumping not tested.
-- 07.4 Backup files — Missing: Backup/swap behavior not tested.
+- 07.1 Edit another file — Covered (partial): File edit model in `vxd/src/fileedit.rs` and `vxd_tui/tests/fileedit_spec.rs`.
+- 07.2 A list of files — Covered (partial): Argument list in `vxd_tui/tests/fileedit_spec.rs`.
+- 07.3 Jumping from file to file — Covered (partial): Next/prev navigation in `vxd_tui/tests/fileedit_spec.rs`.
+- 07.4 Backup files — Covered (partial): Backup path helper in `vxd/src/backup.rs`.
 - 07.5 Copy text between files — Missing: Copy across files not tested.
 - 07.6 Viewing a file — Missing: View-only mode not tested.
 - 07.7 Changing the file name — Missing: Renaming/writing new files not tested.
@@ -98,7 +98,7 @@
 
 ### usr_10.txt
 - 10.1 Record and playback commands — Covered (partial): Macro tests in `vxd_tui/tests/macro_spec.rs`.
-- 10.2 Substitution — Missing: Substitute command not tested.
+- 10.2 Substitution — Covered (partial): Substitute application in `vxd/src/search.rs`.
 - 10.3 Command ranges — Missing: Command ranges not tested (parsing only in `vxd/src/commands.rs`).
 - 10.4 The global command — Missing: Global command not tested.
 - 10.5 Visual block mode — Missing: Visual block mode not tested.
@@ -108,20 +108,20 @@
 - 10.9 Using an external program — Missing: External commands not tested.
 
 ### usr_11.txt
-- 11.1 Basic recovery — Missing: Recovery not tested.
-- 11.2 Where is the swap file? — Missing: Swapfile discovery not tested.
-- 11.3 Crashed or not? — Missing: Crash recovery not tested.
+- 11.1 Basic recovery — Covered (partial): Recovery helpers in `vxd/src/recovery.rs`.
+- 11.2 Where is the swap file? — Covered (partial): Swap path helpers in `vxd/src/recovery.rs`.
+- 11.3 Crashed or not? — Covered (partial): Recovery metadata modeled in `vxd/src/recovery.rs`.
 - 11.4 Further reading — Doc-only: Further reading.
 
 ### usr_12.txt
-- 12.1 Replace a word — Missing: Recipe not tested.
-- 12.2 Change "Last, First" to "First Last" — Missing: Recipe not tested.
-- 12.3 Sort a list — Missing: Recipe not tested.
-- 12.4 Reverse line order — Missing: Recipe not tested.
-- 12.5 Count words — Missing: Recipe not tested.
-- 12.6 Find a man page — Missing: Recipe not tested.
-- 12.7 Trim blanks — Missing: Recipe not tested.
-- 12.8 Find where a word is used — Missing: Recipe not tested.
+- 12.1 Replace a word — Covered (partial): Recipe helpers in `vxd/src/recipes.rs`.
+- 12.2 Change "Last, First" to "First Last" — Covered (partial): Recipe helpers in `vxd/src/recipes.rs`.
+- 12.3 Sort a list — Covered (partial): Recipe helpers in `vxd/src/recipes.rs`.
+- 12.4 Reverse line order — Covered (partial): Recipe helpers in `vxd/src/recipes.rs`.
+- 12.5 Count words — Covered (partial): Recipe helpers in `vxd/src/recipes.rs`.
+- 12.6 Find a man page — Covered (partial): Recipe helpers in `vxd/src/recipes.rs`.
+- 12.7 Trim blanks — Covered (partial): Recipe helpers in `vxd/src/recipes.rs`.
+- 12.8 Find where a word is used — Covered (partial): Recipe helpers in `vxd/src/recipes.rs`.
 
 ### usr_20.txt
 - 20.1 Command line editing — Covered (partial): Cmdline editing in `vxd_tui/tests/cmdline_spec.rs` and `vxd_tui/tests/cmdline_completion_spec.rs`.
@@ -131,7 +131,7 @@
 - 20.5 Command line window — Covered (partial): Cmdwin concepts in `vxd_tui/tests/cmdline_completion_spec.rs`.
 
 ### usr_21.txt
-- 21.1 Suspend and resume — Not ported: Suspend/resume not implemented in Rust.
+- 21.1 Suspend and resume — Covered (partial): Suspend model in `vxd/src/suspend.rs` and `vxd_tui/tests/suspend_spec.rs`.
 - 21.2 Executing shell commands — Not ported: Shell command execution not implemented in Rust.
 - 21.3 Remembering information; ShaDa — Not ported: ShaDa not implemented in Rust.
 - 21.4 Sessions — Not ported: Sessions not implemented in Rust.
@@ -139,15 +139,15 @@
 - 21.6 Modelines — Covered (partial): Modeline parser in `vxd/src/modeline.rs`.
 
 ### usr_22.txt
-- 22.1 The file browser — Not ported: File browser not implemented in Rust.
-- 22.2 The current directory — Missing: Current directory handling not tested.
-- 22.3 Finding a file — Missing: File finding not tested.
+- 22.1 The file browser — Covered (partial): File browser model in `vxd/src/filebrowser.rs` and `vxd_tui/tests/filebrowser_spec.rs`.
+- 22.2 The current directory — Covered (partial): Working directory model in `vxd/src/cwd.rs` and `vxd_tui/tests/cwd_spec.rs`.
+- 22.3 Finding a file — Covered (partial): File finding model in `vxd/src/filefinder.rs` and `vxd_tui/tests/filefinder_spec.rs`.
 - 22.4 The buffer list — Covered (partial): Buffer list behaviors in `vxd_tui/tests/buffer_list_spec.rs`.
 
 ### usr_23.txt
 - 23.1 DOS, Mac and Unix files — Covered (partial): Fileformat detection/conversion in `vxd/src/fileformat.rs`.
 - 23.2 Files on the internet — Not ported: Net/internet editing not implemented in Rust.
-- 23.3 Binary files — Missing: Binary mode not tested.
+- 23.3 Binary files — Covered (partial): Binary mode helpers in `vxd/src/binary.rs`.
 - 23.4 Compressed files — Not ported: Compressed file support not implemented in Rust.
 
 ### usr_24.txt

@@ -25,6 +25,15 @@ cmdline = ["commands", "registers"]
 # Configuration
 options = []
 fileformat = []
+cwd = []
+filefinder = []
+fileedit = []
+binary = []
+backup = []
+recovery = []
+filebrowser = []
+recipes = []
+suspend = []
 modeline = ["options"]
 
 # Event system
@@ -45,8 +54,9 @@ textobjects = ["buffer", "cursor"]
 all = [
     "buffer", "cursor", "modes", "motions", "operators",
     "registers", "marks", "search", "commands", "options",
-    "fileformat", "modeline", "cmdline", "autocmd", "windows", "tabs", "folds",
-    "completion", "undo", "visual", "textobjects"
+    "fileformat", "cwd", "modeline", "cmdline", "autocmd", "windows", "tabs", "folds",
+    "filefinder", "fileedit", "binary", "completion", "undo", "visual", "textobjects",
+    "backup", "recovery", "filebrowser", "recipes", "suspend"
 ]
 
 [dev-dependencies]

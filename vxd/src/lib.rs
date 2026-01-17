@@ -85,6 +85,33 @@ pub mod options;
 #[cfg(feature = "fileformat")]
 pub mod fileformat;
 
+#[cfg(feature = "cwd")]
+pub mod cwd;
+
+#[cfg(feature = "filefinder")]
+pub mod filefinder;
+
+#[cfg(feature = "fileedit")]
+pub mod fileedit;
+
+#[cfg(feature = "binary")]
+pub mod binary;
+
+#[cfg(feature = "backup")]
+pub mod backup;
+
+#[cfg(feature = "recovery")]
+pub mod recovery;
+
+#[cfg(feature = "filebrowser")]
+pub mod filebrowser;
+
+#[cfg(feature = "recipes")]
+pub mod recipes;
+
+#[cfg(feature = "suspend")]
+pub mod suspend;
+
 #[cfg(feature = "modeline")]
 pub mod modeline;
 
@@ -155,6 +182,33 @@ pub mod prelude {
 
     #[cfg(feature = "fileformat")]
     pub use crate::fileformat::FileFormat;
+
+    #[cfg(feature = "cwd")]
+    pub use crate::cwd::WorkingDirectory;
+
+    #[cfg(feature = "filefinder")]
+    pub use crate::filefinder::FileFinder;
+
+    #[cfg(feature = "fileedit")]
+    pub use crate::fileedit::FileEditor;
+
+    #[cfg(feature = "binary")]
+    pub use crate::binary::to_binary;
+
+    #[cfg(feature = "backup")]
+    pub use crate::backup::backup_path;
+
+    #[cfg(feature = "recovery")]
+    pub use crate::recovery::swap_path;
+
+    #[cfg(feature = "filebrowser")]
+    pub use crate::filebrowser::FileBrowser;
+
+    #[cfg(feature = "recipes")]
+    pub use crate::recipes::replace_word;
+
+    #[cfg(feature = "suspend")]
+    pub use crate::suspend::Suspender;
 
     #[cfg(feature = "modeline")]
     pub use crate::modeline::ModelineSetting;

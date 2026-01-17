@@ -7,7 +7,12 @@
 //! tests derived from Neovim's test suite.
 
 pub mod buffer;
+pub mod cwd;
 pub mod cursor;
+pub mod filefinder;
+pub mod fileedit;
+pub mod filebrowser;
+pub mod suspend;
 pub mod cmdline;
 pub mod editor;
 pub mod exit;

@@ -6,6 +6,7 @@
 use vxd::buffer::{Buffer, BufferManager};
 use vxd::cursor::Cursor;
 use vxd::modes::Mode;
+use vxd::motions::CharFindMotion;
 use vxd::types::LineNr;
 use vxd_tui::editor::Editor;
 
@@ -13,6 +14,7 @@ use vxd_tui::editor::Editor;
 pub struct TestHarness {
     pub editor: Editor,
     pending_g: bool,
+    pending_char_find: Option<PendingCharFind>,
 }
 
 #[allow(dead_code)]
@@ -22,6 +24,7 @@ impl TestHarness {
         TestHarness {
             editor: Editor::new(),
             pending_g: false,
+            pending_char_find: None,
         }
     }
 
@@ -135,6 +138,18 @@ impl TestHarness {
         if self.pending_g && !matches!(key, Key::Char('g')) {
             self.pending_g = false;
         }
+        if let Some(pending) = self.pending_char_find.take() {
+            if let Key::Char(target) = key {
+                let motion = match pending {
+                    PendingCharFind::FindForward => CharFindMotion::FindForward(target),
+                    PendingCharFind::FindBackward => CharFindMotion::FindBackward(target),
+                    PendingCharFind::TillForward => CharFindMotion::TillForward(target),
+                    PendingCharFind::TillBackward => CharFindMotion::TillBackward(target),
+                };
+                let _ = self.editor.find_char(motion);
+            }
+            return;
+        }
         match key {
             Key::Char('i') => {
                 let _ = self.editor.enter_insert();
@@ -222,6 +237,24 @@ impl TestHarness {
                     self.pending_g = true;
                 }
             }
+            Key::Char('f') => {
+                self.pending_char_find = Some(PendingCharFind::FindForward);
+            }
+            Key::Char('F') => {
+                self.pending_char_find = Some(PendingCharFind::FindBackward);
+            }
+            Key::Char('t') => {
+                self.pending_char_find = Some(PendingCharFind::TillForward);
+            }
+            Key::Char('T') => {
+                self.pending_char_find = Some(PendingCharFind::TillBackward);
+            }
+            Key::Char(';') => {
+                let _ = self.editor.find_char(CharFindMotion::RepeatForward);
+            }
+            Key::Char(',') => {
+                let _ = self.editor.find_char(CharFindMotion::RepeatBackward);
+            }
             _ => {}
         }
     }
@@ -307,6 +340,14 @@ pub enum Key {
     PageDown,
     Ctrl(char),
     Alt(char),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PendingCharFind {
+    FindForward,
+    FindBackward,
+    TillForward,
+    TillBackward,
 }
 
 /// Parse a Vim-style key sequence into individual keys.

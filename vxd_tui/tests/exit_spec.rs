@@ -56,3 +56,43 @@ fn test_zz_writes_and_quits() {
     assert!(should_quit);
     assert!(!editor.buffers.current().is_modified());
 }
+
+#[test]
+fn test_wq_writes_and_quits() {
+    let mut editor = Editor::new();
+    editor
+        .buffers
+        .current_mut()
+        .set_lines(0, -1, false, vec!["changed".to_string()])
+        .unwrap();
+    assert!(editor.buffers.current().is_modified());
+
+    let should_quit = handle_ex_quit(&mut editor, ":wq").unwrap();
+    assert!(should_quit);
+    assert!(!editor.buffers.current().is_modified());
+}
+
+#[test]
+fn test_x_writes_if_modified_and_quits() {
+    let mut editor = Editor::new();
+    editor
+        .buffers
+        .current_mut()
+        .set_lines(0, -1, false, vec!["changed".to_string()])
+        .unwrap();
+    assert!(editor.buffers.current().is_modified());
+
+    let should_quit = handle_ex_quit(&mut editor, ":x").unwrap();
+    assert!(should_quit);
+    assert!(!editor.buffers.current().is_modified());
+}
+
+#[test]
+fn test_x_on_unmodified_quits_without_write() {
+    let mut editor = Editor::new();
+    assert!(!editor.buffers.current().is_modified());
+
+    let should_quit = handle_ex_quit(&mut editor, ":x").unwrap();
+    assert!(should_quit);
+    assert!(!editor.buffers.current().is_modified());
+}

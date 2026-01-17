@@ -9,7 +9,7 @@ use crate::editor::Editor;
 
 const E37_NO_WRITE: &str = "No write since last change (add ! to override)";
 
-/// Execute an ex-style quit command (":q", ":q!", ":quit").
+/// Execute an ex-style quit command (":q", ":q!", ":quit", ":wq", ":x").
 ///
 /// Returns true if the editor should quit.
 pub fn handle_ex_quit(editor: &mut Editor, cmdline: &str) -> VimResult<bool> {
@@ -22,6 +22,8 @@ pub fn handle_ex_quit(editor: &mut Editor, cmdline: &str) -> VimResult<bool> {
     let (name, bang) = parse_bang(cmd);
     match name {
         "q" | "quit" => quit_if_allowed(editor, bang),
+        "wq" => write_then_quit(editor, bang),
+        "x" | "xit" => write_if_modified_then_quit(editor, bang),
         _ => Err(VimError::NotEditorCommand(name.to_string())),
     }
 }
@@ -39,6 +41,22 @@ fn quit_if_allowed(editor: &mut Editor, force: bool) -> VimResult<bool> {
     if modified && !force {
         return Err(VimError::Error(37, E37_NO_WRITE.to_string()));
     }
+    Ok(true)
+}
+
+fn write_then_quit(editor: &mut Editor, force: bool) -> VimResult<bool> {
+    if force {
+        return Ok(true);
+    }
+    write_if_modified(editor)?;
+    Ok(true)
+}
+
+fn write_if_modified_then_quit(editor: &mut Editor, force: bool) -> VimResult<bool> {
+    if force {
+        return Ok(true);
+    }
+    write_if_modified(editor)?;
     Ok(true)
 }
 
