@@ -179,7 +179,7 @@
 - 27.1 Ignoring case — Covered (partial): Ignorecase/smartcase tests in `vxd/src/search.rs`.
 - 27.2 Wrapping around the file end — Covered (partial): Wrapscan behavior in `vxd/src/search.rs`.
 - 27.3 Offsets — Covered (partial): Search offset application tests in `vxd/src/search.rs`.
-- 27.4 Matching multiple times — Missing: Multi-match search not tested.
+- 27.4 Matching multiple times — Covered (partial): Multi-match search tests in `vxd/src/search.rs`.
 - 27.5 Alternatives — Missing: Alternatives not tested.
 - 27.6 Character ranges — Missing: Character ranges not tested.
 - 27.7 Character classes — Missing: Character classes not tested.

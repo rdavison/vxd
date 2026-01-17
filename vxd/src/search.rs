@@ -810,6 +810,37 @@ mod tests {
         assert_eq!(pos.col, 1);
     }
 
+    #[test]
+    fn test_search_find_all_multiple_matches() {
+        let lines = vec!["one one".to_string(), "two one".to_string()];
+        let engine = SimpleSearchEngine::new(lines);
+        let pattern = SearchPattern::forward("one");
+        let start = CursorPosition::ORIGIN;
+        let end = CursorPosition::new(LineNr(2), usize::MAX);
+
+        let matches = engine
+            .find_all(&pattern, start, end, &SearchOptions::default())
+            .unwrap();
+
+        assert_eq!(matches.len(), 3);
+        assert_eq!(matches[0].start, CursorPosition::new(LineNr(1), 0));
+        assert_eq!(matches[1].start, CursorPosition::new(LineNr(1), 4));
+        assert_eq!(matches[2].start, CursorPosition::new(LineNr(2), 4));
+    }
+
+    #[test]
+    fn test_search_count_matches() {
+        let lines = vec!["one one".to_string(), "two one".to_string()];
+        let engine = SimpleSearchEngine::new(lines);
+        let pattern = SearchPattern::forward("one");
+
+        let count = engine
+            .count_matches(&pattern, &SearchOptions::default())
+            .unwrap();
+
+        assert_eq!(count, 3);
+    }
+
     #[allow(dead_code)]
     mod behavioral_tests {
         //! # Search Behavioral Tests
