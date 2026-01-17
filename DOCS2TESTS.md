@@ -100,7 +100,7 @@
 - 10.1 Record and playback commands — Covered (partial): Macro tests in `vxd_tui/tests/macro_spec.rs`.
 - 10.2 Substitution — Covered (partial): Substitute application in `vxd/src/search.rs`.
 - 10.3 Command ranges — Covered (partial): Range parsing tests in `vxd/src/commands.rs`.
-- 10.4 The global command — Missing: Global command not tested.
+- 10.4 The global command — Covered (partial): Global command logic and parsing tested in `vxd_tui/tests/global_spec.rs` (no full CLI integration yet).
 - 10.5 Visual block mode — Covered: Visual block mode tests in `vxd_tui/tests/visual_block_spec.rs`.
 - 10.6 Reading and writing part of a file — Missing: Read/write part of file not tested.
 - 10.7 Formatting text — Missing: Formatting text not tested.

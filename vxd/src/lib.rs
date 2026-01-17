@@ -77,6 +77,9 @@ pub mod search;
 #[cfg(feature = "commands")]
 pub mod commands;
 
+#[cfg(feature = "commands")]
+pub mod global;
+
 #[cfg(feature = "cmdline")]
 pub mod cmdline;
 

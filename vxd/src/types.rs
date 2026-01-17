@@ -227,6 +227,8 @@ pub enum VimError {
     ReadOnly(String),
     /// Operation not allowed in current mode
     NotAllowedInMode(String),
+    /// Argument required
+    ArgumentRequired,
     /// Trailing characters after command
     TrailingCharacters,
     /// Not an editor command
@@ -255,6 +257,7 @@ impl fmt::Display for VimError {
             VimError::PermissionDenied(s) => write!(f, "E212: Can't open file for writing: {}", s),
             VimError::ReadOnly(s) => write!(f, "E45: 'readonly' option is set: {}", s),
             VimError::NotAllowedInMode(s) => write!(f, "E523: Not allowed here: {}", s),
+            VimError::ArgumentRequired => write!(f, "E471: Argument required"),
             VimError::TrailingCharacters => write!(f, "E488: Trailing characters"),
             VimError::NotEditorCommand(s) => write!(f, "E492: Not an editor command: {}", s),
             VimError::Error(n, s) => write!(f, "E{}: {}", n, s),
