@@ -1,0 +1,51 @@
+[package]
+name = "vxd"
+version = "0.1.0"
+edition = "2021"
+description = "A trait-based specification of Vim's expected behaviors"
+license = "MIT OR Apache-2.0"
+
+[features]
+default = []
+
+# Core editing features
+buffer = []
+cursor = []
+modes = []
+motions = ["cursor"]
+operators = ["buffer", "cursor", "registers"]
+registers = []
+marks = ["buffer", "cursor"]
+search = ["buffer", "cursor"]
+
+# Command system
+commands = ["buffer"]
+
+# Configuration
+options = []
+
+# Event system
+autocmd = []
+
+# Window/Tab management
+windows = ["buffer"]
+tabs = ["windows"]
+
+# Advanced features
+folds = ["buffer"]
+completion = ["buffer", "cursor"]
+undo = ["buffer"]
+visual = ["buffer", "cursor", "modes"]
+textobjects = ["buffer", "cursor"]
+
+# Meta-features
+all = [
+    "buffer", "cursor", "modes", "motions", "operators",
+    "registers", "marks", "search", "commands", "options",
+    "autocmd", "windows", "tabs", "folds", "completion",
+    "undo", "visual", "textobjects"
+]
+
+[dev-dependencies]
+# For property-based testing of Vim invariants
+proptest = "1.4"

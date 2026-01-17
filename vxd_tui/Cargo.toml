@@ -1,0 +1,12 @@
+[package]
+name = "vxd_tui"
+version = "0.1.0"
+edition = "2021"
+description = "TUI implementation of vxd traits - a Vim-compatible editor"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+vxd = { path = "../vxd", features = ["all"] }
+
+[dev-dependencies]
+proptest = "1.4"
