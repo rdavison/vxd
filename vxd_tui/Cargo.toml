@@ -7,6 +7,8 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 vxd = { path = "../vxd", features = ["all"] }
+ratatui = "0.29"
+crossterm = "0.28"
 
 [dev-dependencies]
 proptest = "1.4"
