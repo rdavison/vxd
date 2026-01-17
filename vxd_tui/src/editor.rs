@@ -786,7 +786,92 @@ impl Editor {
                 self.cursor.set_position(CursorPosition::new(start_line, start_col), &ctx)?;
                 Ok(())
             }
-            _ => Err(VimError::Error(1, "Only block yank implemented".to_string())),
+            Mode::Visual(VisualMode::Line) => {
+                let start_line = start.line.min(end.line);
+                let end_line = start.line.max(end.line);
+                let buffer = self.buffers.current();
+                
+                let mut text = Vec::new();
+                for i in start_line.0..=end_line.0 {
+                    if let Ok(line) = buffer.get_line((i as i64) - 1) {
+                         text.push(line);
+                    }
+                }
+                
+                let content = RegisterContent {
+                    text,
+                    reg_type: RegisterType::Linewise,
+                };
+                self.registers.set(Register::Unnamed, content.clone())?;
+                self.registers.set(Register::Named('0'), content)?;
+                
+                self.escape()?;
+                // Cursor to start line, col 0
+                let ctx = self.cursor_context();
+                self.cursor.set_position(CursorPosition::new(start_line, 0), &ctx)?;
+                self.sync_cursor_with_buffer();
+                Ok(())
+            }
+            Mode::Visual(VisualMode::Char) => {
+                // Handle forward/backward selection
+                let (start_pos, end_pos) = if start.line < end.line || (start.line == end.line && start.col <= end.col) {
+                     (start, end)
+                } else {
+                     (end, start)
+                };
+                
+                let buffer = self.buffers.current();
+                let mut text = Vec::new();
+                
+                if start_pos.line == end_pos.line {
+                     if let Ok(line) = buffer.get_line((start_pos.line.0 as i64) - 1) {
+                         let len = line.len();
+                         let s = start_pos.col.min(len);
+                         let e = (end_pos.col + 1).min(len);
+                         if s < e {
+                             text.push(line[s..e].to_string());
+                         } else {
+                             text.push("".to_string());
+                         }
+                     }
+                } else {
+                    // Multi-line charwise
+                    // First line
+                    if let Ok(line) = buffer.get_line((start_pos.line.0 as i64) - 1) {
+                        let len = line.len();
+                        let s = start_pos.col.min(len);
+                        text.push(line[s..].to_string());
+                    }
+                    
+                    // Middle lines
+                    for i in (start_pos.line.0 + 1)..end_pos.line.0 {
+                         if let Ok(line) = buffer.get_line((i as i64) - 1) {
+                             text.push(line);
+                         }
+                    }
+                    
+                    // Last line
+                    if let Ok(line) = buffer.get_line((end_pos.line.0 as i64) - 1) {
+                        let len = line.len();
+                        let e = (end_pos.col + 1).min(len);
+                        text.push(line[..e].to_string());
+                    }
+                }
+                
+                let content = RegisterContent {
+                     text,
+                     reg_type: RegisterType::Characterwise,
+                };
+                self.registers.set(Register::Unnamed, content.clone())?;
+                self.registers.set(Register::Named('0'), content)?;
+                
+                self.escape()?;
+                let ctx = self.cursor_context();
+                self.cursor.set_position(start_pos, &ctx)?;
+                self.sync_cursor_with_buffer();
+                Ok(())
+            }
+            _ => Err(VimError::Error(1, "Only visual yank implemented".to_string())),
         }
     }
 }

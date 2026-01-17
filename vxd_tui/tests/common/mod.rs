@@ -276,6 +276,12 @@ impl TestHarness {
             Key::Char('R') => {
                 let _ = self.editor.enter_replace();
             }
+            Key::Char('p') => {
+                let _ = self.editor.put_register(Register::Unnamed, true);
+            }
+            Key::Char('P') => {
+                let _ = self.editor.put_register(Register::Unnamed, false);
+            }
             Key::Char('%') => {
                 let _ = self.editor.match_bracket();
             }

@@ -75,7 +75,7 @@
 - 07.2 A list of files — Covered (partial): Argument list in `vxd_tui/tests/fileedit_spec.rs`.
 - 07.3 Jumping from file to file — Covered (partial): Next/prev navigation in `vxd_tui/tests/fileedit_spec.rs`.
 - 07.4 Backup files — Covered (partial): Backup path helper in `vxd/src/backup.rs`.
-- 07.5 Copy text between files — Missing: Copy across files not tested.
+- 07.5 Copy text between files — Covered: Copy across files tested in `vxd_tui/tests/copy_across_files_spec.rs` (visual yank implemented).
 - 07.6 Viewing a file — Covered (partial): View-only modifiable test in `vxd_tui/tests/view_spec.rs`.
 - 07.7 Changing the file name — Covered (partial): Buffer renaming in `vxd_tui/tests/buffer_spec.rs`.
 
@@ -299,3 +299,4 @@
 - ~~Add visual block mode behavior tests in `vxd_tui` (section 10.5).~~ Done: `vxd_tui/tests/visual_block_spec.rs` (15 tests)
 - ~~Add insert-mode abbreviation tests in `vxd_tui` (section 24.7).~~ Done: `vxd_tui/tests/abbreviation_spec.rs` (4 tests)
 - ~~Add key mapping tests in `vxd_tui` (sections 05.3, 40.1).~~ Done: `vxd_tui/tests/mapping_spec.rs` (2 tests)
+- ~~Add copy between files tests in `vxd_tui` (section 07.5).~~ Done: `vxd_tui/tests/copy_across_files_spec.rs` (2 tests)
