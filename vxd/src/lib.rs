@@ -121,6 +121,12 @@ pub mod position;
 #[cfg(feature = "scroll")]
 pub mod scroll;
 
+#[cfg(feature = "movetext")]
+pub mod move_text;
+
+#[cfg(feature = "showmatch")]
+pub mod showmatch;
+
 #[cfg(feature = "autocmd")]
 pub mod autocmd;
 
@@ -224,6 +230,12 @@ pub mod prelude {
 
     #[cfg(feature = "scroll")]
     pub use crate::scroll::{scroll_topline, ScrollDirection};
+
+    #[cfg(feature = "movetext")]
+    pub use crate::move_text::move_line_range;
+
+    #[cfg(feature = "showmatch")]
+    pub use crate::showmatch::find_matching_bracket;
 
     #[cfg(feature = "autocmd")]
     pub use crate::autocmd::AutocmdManager;

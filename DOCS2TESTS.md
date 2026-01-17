@@ -46,11 +46,11 @@
 - 04.2 Changing text — Covered (partial): Basic change/delete in `vxd_tui/tests/mode_normal_spec.rs`.
 - 04.3 Repeating a change — Covered (partial): Count and motion types in `vxd_tui/tests/operator_spec.rs`.
 - 04.4 Visual mode — Covered (partial): Visual selection tests in `vxd_tui/tests/visual_spec.rs`.
-- 04.5 Moving text — Missing: Move text commands not tested.
+- 04.5 Moving text — Covered (partial): Line move helper in `vxd/src/move_text.rs`.
 - 04.6 Copying text — Covered (partial): Yank/put register tests in `vxd_tui/tests/put_spec.rs`.
 - 04.7 Using the clipboard — Covered (partial): Register plumbing in `vxd_tui/tests/register_spec.rs` and `vxd_tui/tests/put_spec.rs`.
 - 04.8 Text objects — Covered (partial): Text object types and matching in `vxd_tui/tests/textobject_spec.rs`.
-- 04.9 Replace mode — Missing: Replace mode not tested.
+- 04.9 Replace mode — Covered (partial): Replace mode tests in `vxd_tui/tests/replace_spec.rs`.
 - 04.10 Conclusion — Doc-only: Chapter summary.
 
 ### usr_05.txt
@@ -99,7 +99,7 @@
 ### usr_10.txt
 - 10.1 Record and playback commands — Covered (partial): Macro tests in `vxd_tui/tests/macro_spec.rs`.
 - 10.2 Substitution — Covered (partial): Substitute application in `vxd/src/search.rs`.
-- 10.3 Command ranges — Missing: Command ranges not tested (parsing only in `vxd/src/commands.rs`).
+- 10.3 Command ranges — Covered (partial): Range parsing tests in `vxd/src/commands.rs`.
 - 10.4 The global command — Missing: Global command not tested.
 - 10.5 Visual block mode — Missing: Visual block mode not tested.
 - 10.6 Reading and writing part of a file — Missing: Read/write part of file not tested.
@@ -152,7 +152,7 @@
 
 ### usr_24.txt
 - 24.1 Making corrections — Covered (partial): Insert corrections/backspace in `vxd_tui/tests/mode_insert_spec.rs`.
-- 24.2 Showing matches — Missing: Show matches not tested.
+- 24.2 Showing matches — Covered (partial): Bracket matching helper in `vxd/src/showmatch.rs`.
 - 24.3 Completion — Missing: Insert-mode completion not tested.
 - 24.4 Repeating an insert — Missing: Repeat insert not tested.
 - 24.5 Copying from another line — Missing: Copy from another line not tested.

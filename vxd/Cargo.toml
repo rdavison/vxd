@@ -37,6 +37,8 @@ suspend = []
 modeline = ["options"]
 position = ["cursor"]
 scroll = []
+movetext = []
+showmatch = []
 
 # Event system
 autocmd = []
@@ -58,7 +60,8 @@ all = [
     "registers", "marks", "search", "commands", "options",
     "fileformat", "cwd", "modeline", "cmdline", "autocmd", "windows", "tabs", "folds",
     "filefinder", "fileedit", "binary", "completion", "undo", "visual", "textobjects",
-    "backup", "recovery", "filebrowser", "recipes", "suspend", "position", "scroll"
+    "backup", "recovery", "filebrowser", "recipes", "suspend", "position", "scroll", "movetext",
+    "showmatch"
 ]
 
 [dev-dependencies]

@@ -94,6 +94,15 @@ impl Editor {
         Ok(())
     }
 
+    /// Enter replace mode
+    pub fn enter_replace(&mut self) -> VimResult<()> {
+        self.modes
+            .enter_replace()
+            .map(|_| ())
+            .map_err(|err| VimError::NotAllowedInMode(err.reason))?;
+        Ok(())
+    }
+
     /// Enter normal mode (escape)
     pub fn escape(&mut self) -> VimResult<()> {
         self.modes
@@ -159,14 +168,22 @@ impl Editor {
         // Get current line
         let current_line = self.current_line();
 
-        // Insert character
-        let (before, after) = if col <= current_line.len() {
-            (&current_line[..col], &current_line[col..])
+        let new_line = if self.modes.mode() == Mode::Replace && col < current_line.len() {
+            let char_end = col
+                + current_line[col..]
+                    .chars()
+                    .next()
+                    .map(|ch| ch.len_utf8())
+                    .unwrap_or(1);
+            format!("{}{}{}", &current_line[..col], c, &current_line[char_end..])
         } else {
-            (current_line.as_str(), "")
+            let (before, after) = if col <= current_line.len() {
+                (&current_line[..col], &current_line[col..])
+            } else {
+                (current_line.as_str(), "")
+            };
+            format!("{}{}{}", before, c, after)
         };
-
-        let new_line = format!("{}{}{}", before, c, after);
         self.buffers
             .current_mut()
             .set_lines(line_idx, line_idx + 1, false, vec![new_line])?;

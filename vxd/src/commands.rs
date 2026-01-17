@@ -93,6 +93,85 @@ pub struct ExCommand {
     pub register: Option<char>,
 }
 
+/// Parse a leading command range from a command line.
+pub fn parse_command_range(input: &str) -> VimResult<(CommandRange, &str)> {
+    let mut idx = 0usize;
+    skip_whitespace(input, &mut idx);
+    if idx >= input.len() {
+        return Ok((CommandRange::default(), input));
+    }
+
+    if input[idx..].starts_with('%') {
+        idx += 1;
+        return Ok((CommandRange::whole_file(), &input[idx..]));
+    }
+
+    let start = match parse_line_spec(input, &mut idx) {
+        Some(spec) => spec,
+        None => return Ok((CommandRange::default(), input)),
+    };
+
+    skip_whitespace(input, &mut idx);
+    let end = if idx < input.len() && input[idx..].starts_with(',') {
+        idx += 1;
+        skip_whitespace(input, &mut idx);
+        parse_line_spec(input, &mut idx)
+            .ok_or_else(|| VimError::InvalidRange("missing range end".into()))?
+    } else {
+        return Ok((
+            CommandRange {
+                start: Some(start),
+                end: None,
+                whole_file: false,
+            },
+            &input[idx..],
+        ));
+    };
+
+    Ok((
+        CommandRange {
+            start: Some(start),
+            end: Some(end),
+            whole_file: false,
+        },
+        &input[idx..],
+    ))
+}
+
+fn parse_line_spec(input: &str, idx: &mut usize) -> Option<LineSpec> {
+    if *idx >= input.len() {
+        return None;
+    }
+    let rest = &input[*idx..];
+    let mut chars = rest.chars();
+    match chars.next()? {
+        '.' => {
+            *idx += 1;
+            Some(LineSpec::Current)
+        }
+        '$' => {
+            *idx += 1;
+            Some(LineSpec::Last)
+        }
+        ch if ch.is_ascii_digit() => {
+            let mut end = *idx + 1;
+            while end < input.len() && input.as_bytes()[end].is_ascii_digit() {
+                end += 1;
+            }
+            let number = input[*idx..end].parse::<usize>().ok()?;
+            *idx = end;
+            Some(LineSpec::Absolute(LineNr(number)))
+        }
+        _ => None,
+    }
+}
+
+fn skip_whitespace(input: &str, idx: &mut usize) {
+    while *idx < input.len() && input.as_bytes()[*idx].is_ascii_whitespace() {
+        *idx += 1;
+    }
+}
+
 /// Result of command execution
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CommandResult {
@@ -212,6 +291,68 @@ mod tests {
 
         let current = CommandRange::current_line();
         assert_eq!(current.start, Some(LineSpec::Current));
+    }
+
+    #[test]
+    fn test_parse_command_range_whole_file() {
+        let (range, rest) = parse_command_range("%s/foo/bar/").unwrap();
+        assert!(range.whole_file);
+        assert_eq!(rest, "s/foo/bar/");
+    }
+
+    #[test]
+    fn test_parse_command_range_lines() {
+        let (range, rest) = parse_command_range("1,5delete").unwrap();
+        assert_eq!(
+            range,
+            CommandRange {
+                start: Some(LineSpec::Absolute(LineNr(1))),
+                end: Some(LineSpec::Absolute(LineNr(5))),
+                whole_file: false,
+            }
+        );
+        assert_eq!(rest, "delete");
+    }
+
+    #[test]
+    fn test_parse_command_range_current_to_last() {
+        let (range, rest) = parse_command_range(".,$p").unwrap();
+        assert_eq!(
+            range,
+            CommandRange {
+                start: Some(LineSpec::Current),
+                end: Some(LineSpec::Last),
+                whole_file: false,
+            }
+        );
+        assert_eq!(rest, "p");
+    }
+
+    #[test]
+    fn test_parse_command_range_single_line() {
+        let (range, rest) = parse_command_range("10y").unwrap();
+        assert_eq!(
+            range,
+            CommandRange {
+                start: Some(LineSpec::Absolute(LineNr(10))),
+                end: None,
+                whole_file: false,
+            }
+        );
+        assert_eq!(rest, "y");
+    }
+
+    #[test]
+    fn test_parse_command_range_none() {
+        let (range, rest) = parse_command_range("write").unwrap();
+        assert_eq!(range, CommandRange::default());
+        assert_eq!(rest, "write");
+    }
+
+    #[test]
+    fn test_parse_command_range_missing_end_errors() {
+        let err = parse_command_range("1,").unwrap_err();
+        assert_eq!(err, VimError::InvalidRange("missing range end".into()));
     }
 
     #[allow(dead_code)]

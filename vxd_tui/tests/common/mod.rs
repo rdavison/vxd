@@ -128,7 +128,7 @@ impl TestHarness {
     fn process_key(&mut self, key: Key) {
         match self.editor.mode() {
             Mode::Normal => self.process_normal_key(key),
-            Mode::Insert => self.process_insert_key(key),
+            Mode::Insert | Mode::Replace => self.process_insert_key(key),
             Mode::Visual(_) => self.process_visual_key(key),
             _ => {}
         }
@@ -254,6 +254,9 @@ impl TestHarness {
             }
             Key::Char(',') => {
                 let _ = self.editor.find_char(CharFindMotion::RepeatBackward);
+            }
+            Key::Char('R') => {
+                let _ = self.editor.enter_replace();
             }
             Key::Char('%') => {
                 let _ = self.editor.match_bracket();
