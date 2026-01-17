@@ -101,7 +101,7 @@
 - 10.2 Substitution — Covered (partial): Substitute application in `vxd/src/search.rs`.
 - 10.3 Command ranges — Covered (partial): Range parsing tests in `vxd/src/commands.rs`.
 - 10.4 The global command — Missing: Global command not tested.
-- 10.5 Visual block mode — Missing: Visual block mode not tested.
+- 10.5 Visual block mode — Covered: Visual block mode tests in `vxd_tui/tests/visual_block_spec.rs`.
 - 10.6 Reading and writing part of a file — Missing: Read/write part of file not tested.
 - 10.7 Formatting text — Missing: Formatting text not tested.
 - 10.8 Changing case — Covered (partial): Case change helper tests in `vxd/src/operators.rs`.
@@ -296,3 +296,4 @@
 - ~~Add register/yank/put behavior tests in `vxd_tui` (sections 04.6-04.7, 24.6).~~ Done: `vxd_tui/tests/put_spec.rs` (36 tests)
 - ~~Add cmdline completion/history/window tests in `vxd_tui` (sections 20.1-20.5).~~ Done: `vxd_tui/tests/cmdline_completion_spec.rs` (62 tests)
 - ~~Add folding behavior tests in `vxd` (sections 28.1-28.9).~~ Done: `vxd_tui/tests/fold_spec.rs` (35 tests)
+- ~~Add visual block mode behavior tests in `vxd_tui` (section 10.5).~~ Done: `vxd_tui/tests/visual_block_spec.rs` (15 tests)

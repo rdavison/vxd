@@ -12,9 +12,11 @@ use crate::registers::TuiRegisterBank;
 use vxd::buffer::{Buffer, BufferManager};
 use vxd::cursor::{Cursor, CursorContext, CursorPosition, VirtualEdit};
 use vxd::marks::MarkManager;
-use vxd::modes::{Mode, ModeManager};
+use vxd::modes::{Mode, ModeManager, VisualMode};
 use vxd::motions::CharFindMotion;
+use vxd::registers::{Register, RegisterBank, RegisterContent, RegisterType};
 use vxd::types::{LineNr, VimError, VimResult};
+use vxd::visual::BlockSelection;
 
 /// The main editor struct combining all components
 #[derive(Debug)]
@@ -29,8 +31,19 @@ pub struct Editor {
     pub registers: TuiRegisterBank,
     /// Mark manager
     pub marks: TuiMarkManager,
+    /// Visual selection anchor
+    pub visual_anchor: Option<CursorPosition>,
     last_char_find: Option<CharFindMotion>,
     current_insert: Option<String>,
+    block_op_context: Option<BlockOpContext>,
+}
+
+#[derive(Debug, Clone)]
+struct BlockOpContext {
+    start_line: LineNr,
+    end_line: LineNr,
+    col: usize,
+    // op_type is implicitly Insert for now, as we only use this for repeating insert
 }
 
 impl Editor {
@@ -42,8 +55,10 @@ impl Editor {
             modes: TuiModeManager::new(),
             registers: TuiRegisterBank::new(),
             marks: TuiMarkManager::new(),
+            visual_anchor: None,
             last_char_find: None,
             current_insert: None,
+            block_op_context: None,
         };
 
         // Sync cursor with initial buffer
@@ -107,6 +122,36 @@ impl Editor {
         Ok(())
     }
 
+    /// Enter visual mode
+    pub fn enter_visual(&mut self) -> VimResult<()> {
+        self.modes
+            .enter_visual()
+            .map(|_| ())
+            .map_err(|err| VimError::NotAllowedInMode(err.reason))?;
+        self.visual_anchor = Some(self.cursor.position());
+        Ok(())
+    }
+
+    /// Enter visual line mode
+    pub fn enter_visual_line(&mut self) -> VimResult<()> {
+        self.modes
+            .enter_visual_line()
+            .map(|_| ())
+            .map_err(|err| VimError::NotAllowedInMode(err.reason))?;
+        self.visual_anchor = Some(self.cursor.position());
+        Ok(())
+    }
+
+    /// Enter visual block mode
+    pub fn enter_visual_block(&mut self) -> VimResult<()> {
+        self.modes
+            .enter_visual_block()
+            .map(|_| ())
+            .map_err(|err| VimError::NotAllowedInMode(err.reason))?;
+        self.visual_anchor = Some(self.cursor.position());
+        Ok(())
+    }
+
     /// Enter normal mode (escape)
     pub fn escape(&mut self) -> VimResult<()> {
         self.modes
@@ -116,12 +161,41 @@ impl Editor {
         if let Some(inserted) = self.current_insert.take() {
             if !inserted.is_empty() {
                 self.registers
-                    .set_last_inserted(vxd::registers::RegisterContent::characterwise(inserted));
+                    .set_last_inserted(vxd::registers::RegisterContent::characterwise(inserted.clone()));
+            }
+
+            // Apply block operation if active
+            if let Some(ctx) = self.block_op_context.take() {
+                // Visual block insert typically only supports single-line text insertion being replicated.
+                if !inserted.contains('\n') && !inserted.is_empty() {
+                    let current_line = self.cursor.line();
+                    for i in ctx.start_line.0..=ctx.end_line.0 {
+                        let line_nr = LineNr(i);
+                        if line_nr == current_line {
+                            continue; // Already done
+                        }
+                        
+                        // Insert text at ctx.col
+                        if let Ok(mut line) = self.buffers.current().get_line((i as i64) - 1) {
+                             // Pad line if needed? Vim does. For now, simple check.
+                             if ctx.col <= line.len() {
+                                 line.insert_str(ctx.col, &inserted);
+                                 self.buffers.current_mut().set_lines(
+                                     (i as i64) - 1,
+                                     (i as i64),
+                                     false,
+                                     vec![line]
+                                 ).ok(); // Ignore errors
+                             }
+                        }
+                    }
+                }
             }
         }
         // In normal mode, cursor can't be past EOL
         let ctx = self.cursor_context();
         self.cursor.check_cursor(&ctx);
+        self.visual_anchor = None;
         Ok(())
     }
 
@@ -237,6 +311,59 @@ impl Editor {
 
         if let Some(ch) = source_line[col..].chars().next() {
             self.insert_char(ch)?;
+        }
+
+        Ok(())
+    }
+
+    /// Put the contents of a register into the current buffer.
+    pub fn put_register(&mut self, reg: Register, after: bool) -> VimResult<()> {
+        let Some(content) = self.registers.get(reg).cloned() else {
+            return Ok(());
+        };
+
+        match content.reg_type {
+            RegisterType::Linewise => {
+                let line = self.cursor.line().0 as i64;
+                let insert_at = if after { line } else { line.saturating_sub(1) };
+                self.buffers
+                    .current_mut()
+                    .set_lines(insert_at, insert_at, false, content.text)?;
+                self.sync_cursor_with_buffer();
+                let new_line = if after { line + 1 } else { line.max(1) };
+                let ctx = self.cursor_context();
+                self.cursor.set_line(LineNr(new_line as usize), &ctx)?;
+                self.cursor.set_col(0, &ctx)?;
+            }
+            RegisterType::Characterwise => {
+                let line_idx = self.cursor.line().0 as i64 - 1;
+                let line = self.current_line();
+                let text = RegisterContent {
+                    text: content.text,
+                    reg_type: RegisterType::Characterwise,
+                }
+                .as_string();
+                let mut insert_col = self.cursor.col();
+                if after {
+                    insert_col = insert_col.saturating_add(1);
+                }
+                insert_col = insert_col.min(line.len());
+                let mut new_line = line.clone();
+                new_line.insert_str(insert_col, &text);
+                self.buffers
+                    .current_mut()
+                    .set_lines(line_idx, line_idx + 1, false, vec![new_line])?;
+                self.sync_cursor_with_buffer();
+                let ctx = self.cursor_context();
+                self.cursor
+                    .set_col(insert_col + text.len(), &ctx)?;
+            }
+            RegisterType::Blockwise { .. } => {
+                return Err(VimError::Error(
+                    1,
+                    "Blockwise put not implemented".to_string(),
+                ));
+            }
         }
 
         Ok(())
@@ -383,6 +510,197 @@ impl Editor {
         }
 
         Ok(false)
+    }
+
+    // ========================================================================
+    // Visual Mode Operations
+    // ========================================================================
+
+    fn delete_block_selection(&mut self) -> VimResult<(LineNr, LineNr, usize)> {
+        let mode = self.modes.mode();
+        let start = self.visual_anchor.ok_or(VimError::Error(1, "No selection".to_string()))?;
+        let end = self.cursor.position();
+
+        match mode {
+            Mode::Visual(VisualMode::Block) => {
+                let start_line = start.line.min(end.line);
+                let end_line = start.line.max(end.line);
+                let start_col = start.col.min(end.col);
+                let end_col = start.col.max(end.col);
+
+                let mut replacement = Vec::new();
+                let buffer = self.buffers.current();
+                
+                // Get lines and modify them
+                for i in start_line.0..=end_line.0 {
+                    if let Ok(line) = buffer.get_line((i as i64) - 1) {
+                        // Simple byte-based slicing for now (TODO: unicode/tabs)
+                        let line_len = line.len();
+                        if start_col < line_len {
+                            let del_end = (end_col + 1).min(line_len);
+                            let new_line = format!("{}{}", &line[..start_col], &line[del_end..]);
+                            replacement.push((i, new_line));
+                        } else {
+                            // Selection starts after EOL, nothing to delete
+                            replacement.push((i, line));
+                        }
+                    }
+                }
+
+                // Apply changes
+                for (line_nr, content) in replacement {
+                    self.buffers.current_mut().set_lines(
+                        (line_nr as i64) - 1, 
+                        (line_nr as i64) - 1 + 1, // exclusive end
+                        false, 
+                        vec![content]
+                    )?;
+                }
+                
+                Ok((start_line, end_line, start_col))
+            }
+            _ => Err(VimError::Error(1, "Only block delete implemented so far".to_string())),
+        }
+    }
+
+    /// Delete the current visual selection (x/d)
+    pub fn visual_delete(&mut self) -> VimResult<()> {
+        let (start_line, _, start_col) = self.delete_block_selection()?;
+        self.escape()?; // Exit visual mode
+        // Position cursor at start
+        let ctx = self.cursor_context();
+        self.cursor.set_position(CursorPosition::new(start_line, start_col), &ctx)?;
+        self.sync_cursor_with_buffer();
+        Ok(())
+    }
+
+    /// Change the current visual selection (c)
+    pub fn visual_change(&mut self) -> VimResult<()> {
+        let (start_line, end_line, start_col) = self.delete_block_selection()?;
+        self.escape()?; // To clear visual mode
+        // Enter insert mode
+        self.enter_insert()?;
+        // Position cursor
+        let ctx = self.cursor_context();
+        self.cursor.set_position(CursorPosition::new(start_line, start_col), &ctx)?;
+        self.sync_cursor_with_buffer();
+        
+        // Set context for repeat
+        self.block_op_context = Some(BlockOpContext {
+            start_line,
+            end_line,
+            col: start_col,
+        });
+        Ok(())
+    }
+
+    /// Insert at start of visual selection (I)
+    pub fn visual_insert(&mut self) -> VimResult<()> {
+        let mode = self.modes.mode();
+        let start = self.visual_anchor.ok_or(VimError::Error(1, "No selection".to_string()))?;
+        let end = self.cursor.position();
+
+        match mode {
+            Mode::Visual(VisualMode::Block) => {
+                let start_line = start.line.min(end.line);
+                let end_line = start.line.max(end.line);
+                let start_col = start.col.min(end.col);
+                
+                self.escape()?; // Clear visual
+                self.enter_insert()?;
+                let ctx = self.cursor_context();
+                self.cursor.set_position(CursorPosition::new(start_line, start_col), &ctx)?;
+                self.sync_cursor_with_buffer();
+
+                self.block_op_context = Some(BlockOpContext {
+                    start_line,
+                    end_line,
+                    col: start_col,
+                });
+                Ok(())
+            }
+            _ => Err(VimError::Error(1, "Only block insert implemented".to_string())),
+        }
+    }
+
+    /// Append at end of visual selection (A)
+    pub fn visual_append(&mut self) -> VimResult<()> {
+        let mode = self.modes.mode();
+        let start = self.visual_anchor.ok_or(VimError::Error(1, "No selection".to_string()))?;
+        let end = self.cursor.position();
+
+        match mode {
+            Mode::Visual(VisualMode::Block) => {
+                let start_line = start.line.min(end.line);
+                let end_line = start.line.max(end.line);
+                let end_col = start.col.max(end.col);
+                
+                let insert_col = end_col + 1;
+
+                self.escape()?; 
+                self.enter_insert()?;
+                let ctx = self.cursor_context();
+                // Move cursor to start_line, insert_col.
+                // Note: If line is shorter than insert_col, we might need padding?
+                // For now, assume simple behavior.
+                self.cursor.set_position(CursorPosition::new(start_line, insert_col), &ctx)?;
+                self.sync_cursor_with_buffer();
+
+                self.block_op_context = Some(BlockOpContext {
+                    start_line,
+                    end_line,
+                    col: insert_col,
+                });
+                Ok(())
+            }
+            _ => Err(VimError::Error(1, "Only block append implemented".to_string())),
+        }
+    }
+
+    /// Yank the current visual selection (y)
+    pub fn visual_yank(&mut self) -> VimResult<()> {
+        let mode = self.modes.mode();
+        let start = self.visual_anchor.ok_or(VimError::Error(1, "No selection".to_string()))?;
+        let end = self.cursor.position();
+
+        match mode {
+            Mode::Visual(VisualMode::Block) => {
+                let start_line = start.line.min(end.line);
+                let end_line = start.line.max(end.line);
+                let start_col = start.col.min(end.col);
+                let end_col = start.col.max(end.col);
+                let width = end_col - start_col + 1;
+
+                let mut text = Vec::new();
+                let buffer = self.buffers.current();
+                
+                for i in start_line.0..=end_line.0 {
+                    if let Ok(line) = buffer.get_line((i as i64) - 1) {
+                        let line_len = line.len();
+                        if start_col < line_len {
+                            let end_slice = (end_col + 1).min(line_len);
+                            text.push(line[start_col..end_slice].to_string());
+                        } else {
+                            text.push("".to_string());
+                        }
+                    }
+                }
+
+                let content = RegisterContent {
+                    text,
+                    reg_type: RegisterType::Blockwise { width },
+                };
+                self.registers.set(Register::Unnamed, content.clone())?;
+                self.registers.set(Register::Named('0'), content)?;
+
+                self.escape()?;
+                // Cursor to start
+                let ctx = self.cursor_context();
+                self.cursor.set_position(CursorPosition::new(start_line, start_col), &ctx)?;
+                Ok(())
+            }
+            _ => Err(VimError::Error(1, "Only block yank implemented".to_string())),
+        }
     }
 }
 

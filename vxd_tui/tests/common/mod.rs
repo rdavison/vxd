@@ -5,7 +5,7 @@
 
 use vxd::buffer::{Buffer, BufferManager};
 use vxd::cursor::Cursor;
-use vxd::modes::Mode;
+use vxd::modes::{Mode, ModeManager, VisualMode};
 use vxd::motions::CharFindMotion;
 use vxd::registers::{Register, RegisterBank};
 use vxd::types::LineNr;
@@ -197,6 +197,15 @@ impl TestHarness {
                 let _ = self.editor.cursor.set_col(0, &ctx);
                 let _ = self.editor.enter_insert();
             }
+            Key::Char('v') => {
+                let _ = self.editor.enter_visual();
+            }
+            Key::Char('V') => {
+                let _ = self.editor.enter_visual_line();
+            }
+            Key::Ctrl('v') => {
+                let _ = self.editor.enter_visual_block();
+            }
             Key::Char('h') | Key::Left => {
                 let _ = self.editor.cursor_left(1);
             }
@@ -314,25 +323,48 @@ impl TestHarness {
     fn process_visual_key(&mut self, key: Key) {
         match key {
             Key::Escape => {
-                let _ = self.editor.escape();
+                self.editor.escape().unwrap();
+            }
+            Key::Char('v') => {
+                self.editor.modes.transition_to(Mode::Normal).unwrap();
+            }
+            Key::Char('V') => {
+                self.editor.modes.transition_to(Mode::Visual(VisualMode::Line)).unwrap();
+            }
+            Key::Ctrl('v') => {
+                self.editor.modes.transition_to(Mode::Visual(VisualMode::Block)).unwrap();
+            }
+            Key::Char('x') | Key::Char('d') => {
+                self.editor.visual_delete().unwrap();
+            }
+            Key::Char('c') => {
+                self.editor.visual_change().unwrap();
+            }
+            Key::Char('I') => {
+                self.editor.visual_insert().unwrap();
+            }
+            Key::Char('A') => {
+                self.editor.visual_append().unwrap();
+            }
+            Key::Char('y') => {
+                self.editor.visual_yank().unwrap();
             }
             Key::Char('h') | Key::Left => {
-                let _ = self.editor.cursor_left(1);
+                self.editor.cursor_left(1).unwrap();
             }
             Key::Char('j') | Key::Down => {
-                let _ = self.editor.cursor_down(1);
+                self.editor.cursor_down(1).unwrap();
             }
             Key::Char('k') | Key::Up => {
-                let _ = self.editor.cursor_up(1);
+                self.editor.cursor_up(1).unwrap();
             }
             Key::Char('l') | Key::Right => {
-                let _ = self.editor.cursor_right(1);
+                self.editor.cursor_right(1).unwrap();
             }
             _ => {}
         }
     }
 }
-
 impl Default for TestHarness {
     fn default() -> Self {
         Self::new()
