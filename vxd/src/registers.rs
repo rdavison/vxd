@@ -291,6 +291,18 @@ mod tests {
         assert_eq!(line_content.as_string(), "line1\nline2\n");
     }
 
+    #[test]
+    fn test_register_content_append_linewise_wins() {
+        let mut content = RegisterContent::characterwise("alpha");
+        let linewise = RegisterContent::linewise(vec!["beta".into(), "gamma".into()]);
+
+        content.append(&linewise);
+
+        assert_eq!(content.reg_type, RegisterType::Linewise);
+        assert_eq!(content.text, vec!["alpha".to_string(), "beta".to_string(), "gamma".to_string()]);
+        assert_eq!(content.as_string(), "alpha\nbeta\ngamma\n");
+    }
+
     /// Behavioral tests for register implementations
     pub trait RegisterBehaviorTests: RegisterBank + Sized {
         // ====================================================================
