@@ -7,6 +7,7 @@ use vxd::buffer::{Buffer, BufferManager};
 use vxd::cursor::Cursor;
 use vxd::modes::Mode;
 use vxd::motions::CharFindMotion;
+use vxd::registers::{Register, RegisterBank};
 use vxd::types::LineNr;
 use vxd_tui::editor::Editor;
 
@@ -269,6 +270,11 @@ impl TestHarness {
         match key {
             Key::Escape => {
                 let _ = self.editor.escape();
+            }
+            Key::Ctrl('a') => {
+                if let Some(content) = self.editor.registers.get(Register::LastInserted) {
+                    let _ = self.editor.insert_text(&content.as_string());
+                }
             }
             Key::Char(c) => {
                 let _ = self.editor.insert_char(c);

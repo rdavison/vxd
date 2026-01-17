@@ -193,6 +193,18 @@ fn test_enter_at_beginning_of_line() {
     assert_eq!(h.get_lines(), vec!["", "hello"]);
 }
 
+/// Test: repeat insert with Ctrl-A
+/// Source: usr_24.txt (repeating an insert)
+#[test]
+fn test_repeat_insert_ctrl_a() {
+    let mut h = TestHarness::new();
+
+    h.feed("iabc<Esc>");
+    h.feed("o<C-a><Esc>");
+
+    assert_eq!(h.get_lines(), vec!["abc", "abc"]);
+}
+
 /// Test: cursor movement in insert mode with arrow keys
 /// Source: mode_insert_spec.lua (arrow key movement)
 #[test]

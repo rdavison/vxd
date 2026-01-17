@@ -17,6 +17,7 @@ use ratatui::{
 use vxd::buffer::{Buffer, BufferManager};
 use vxd::cursor::Cursor;
 use vxd::modes::Mode;
+use vxd::registers::{Register, RegisterBank};
 use vxd_tui::editor::Editor;
 
 /// Application state
@@ -219,6 +220,12 @@ impl App {
                 // Handle Ctrl+C to exit
                 if modifiers.contains(KeyModifiers::CONTROL) && c == 'c' {
                     self.should_quit = true;
+                    return;
+                }
+                if modifiers.contains(KeyModifiers::CONTROL) && c == 'a' {
+                    if let Some(content) = self.editor.registers.get(Register::LastInserted) {
+                        let _ = self.editor.insert_text(&content.as_string());
+                    }
                     return;
                 }
                 let _ = self.editor.insert_char(c);

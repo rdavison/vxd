@@ -30,6 +30,7 @@ pub struct Editor {
     /// Mark manager
     pub marks: TuiMarkManager,
     last_char_find: Option<CharFindMotion>,
+    current_insert: Option<String>,
 }
 
 impl Editor {
@@ -42,6 +43,7 @@ impl Editor {
             registers: TuiRegisterBank::new(),
             marks: TuiMarkManager::new(),
             last_char_find: None,
+            current_insert: None,
         };
 
         // Sync cursor with initial buffer
@@ -91,6 +93,7 @@ impl Editor {
             .enter_insert()
             .map(|_| ())
             .map_err(|err| VimError::NotAllowedInMode(err.reason))?;
+        self.current_insert = Some(String::new());
         Ok(())
     }
 
@@ -100,6 +103,7 @@ impl Editor {
             .enter_replace()
             .map(|_| ())
             .map_err(|err| VimError::NotAllowedInMode(err.reason))?;
+        self.current_insert = Some(String::new());
         Ok(())
     }
 
@@ -109,6 +113,12 @@ impl Editor {
             .escape_to_normal()
             .map(|_| ())
             .map_err(|err| VimError::NotAllowedInMode(err.reason))?;
+        if let Some(inserted) = self.current_insert.take() {
+            if !inserted.is_empty() {
+                self.registers
+                    .set_last_inserted(vxd::registers::RegisterContent::characterwise(inserted));
+            }
+        }
         // In normal mode, cursor can't be past EOL
         let ctx = self.cursor_context();
         self.cursor.check_cursor(&ctx);
@@ -195,6 +205,9 @@ impl Editor {
 
         // Record change
         self.marks.record_change(self.cursor.position());
+        if let Some(inserted) = self.current_insert.as_mut() {
+            inserted.push(c);
+        }
 
         Ok(())
     }
@@ -264,7 +277,21 @@ impl Editor {
             vxd::cursor::CursorPosition::new(LineNr(self.cursor.line().0 + 1), 0),
             &ctx,
         )?;
+        if let Some(inserted) = self.current_insert.as_mut() {
+            inserted.push('\n');
+        }
 
+        Ok(())
+    }
+
+    pub fn insert_text(&mut self, text: &str) -> VimResult<()> {
+        for ch in text.chars() {
+            if ch == '\n' {
+                self.insert_newline()?;
+            } else {
+                self.insert_char(ch)?;
+            }
+        }
         Ok(())
     }
 

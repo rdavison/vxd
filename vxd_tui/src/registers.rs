@@ -25,6 +25,8 @@ pub struct TuiRegisterBank {
     selection: Option<RegisterContent>,
     /// Clipboard register (+)
     clipboard: Option<RegisterContent>,
+    /// Last inserted text (.)
+    last_inserted: Option<RegisterContent>,
 }
 
 impl TuiRegisterBank {
@@ -49,6 +51,7 @@ impl RegisterBank for TuiRegisterBank {
             Register::Selection => self.selection.as_ref(),
             Register::Clipboard => self.clipboard.as_ref(),
             Register::BlackHole => None, // Black hole always returns nothing
+            Register::LastInserted => self.last_inserted.as_ref(),
             Register::LastSearch => {
                 // Return as register content
                 None // Would need to wrap string
@@ -164,6 +167,12 @@ impl RegisterBank for TuiRegisterBank {
 
     fn set_last_command(&mut self, cmd: &str) {
         self.last_command = Some(cmd.to_string());
+    }
+}
+
+impl TuiRegisterBank {
+    pub fn set_last_inserted(&mut self, content: RegisterContent) {
+        self.last_inserted = Some(content);
     }
 }
 
