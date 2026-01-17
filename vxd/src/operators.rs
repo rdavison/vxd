@@ -302,6 +302,104 @@ pub trait OperatorExecutor {
 }
 
 // ============================================================================
+// Case Operations
+// ============================================================================
+
+/// Case conversion operations.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CaseOp {
+    /// Toggle ASCII case.
+    Toggle,
+    /// Force ASCII lowercase.
+    Lower,
+    /// Force ASCII uppercase.
+    Upper,
+}
+
+/// Apply a case transformation to the given region.
+pub fn apply_case(lines: &mut [String], region: &OperatorRegion, op: CaseOp) -> VimResult<()> {
+    if lines.is_empty() {
+        return Ok(());
+    }
+
+    let mut normalized = region.clone();
+    normalized.normalize();
+    let start_line = normalized.start.line.0.saturating_sub(1);
+    let end_line = normalized.end.line.0.saturating_sub(1);
+    if end_line >= lines.len() {
+        return Err(VimError::InvalidRange("range out of bounds".into()));
+    }
+
+    match normalized.region_type {
+        MotionType::Linewise => {
+            for line in &mut lines[start_line..=end_line] {
+                transform_bytes(line, 0, line.len(), op);
+            }
+        }
+        MotionType::Blockwise => {
+            let start_col = normalized.start.col.to_zero_indexed();
+            let end_col = normalized.end.col.to_zero_indexed();
+            let (col_min, col_max) = if start_col <= end_col {
+                (start_col, end_col)
+            } else {
+                (end_col, start_col)
+            };
+            for line in &mut lines[start_line..=end_line] {
+                let len = line.len();
+                if col_min >= len {
+                    continue;
+                }
+                let end = (col_max + 1).min(len);
+                transform_bytes(line, col_min, end, op);
+            }
+        }
+        MotionType::Characterwise => {
+            let start_col = normalized.start.col.to_zero_indexed();
+            let end_col = normalized.end.col.to_zero_indexed();
+            for (idx, line) in lines[start_line..=end_line].iter_mut().enumerate() {
+                let is_first = idx == 0;
+                let is_last = start_line + idx == end_line;
+                let line_len = line.len();
+                let start = if is_first { start_col.min(line_len) } else { 0 };
+                let mut end = if is_last { end_col.min(line_len) } else { line_len };
+                if is_last && normalized.inclusive {
+                    end = end.saturating_add(1).min(line_len);
+                }
+                if start >= end {
+                    continue;
+                }
+                transform_bytes(line, start, end, op);
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn transform_bytes(line: &mut String, start: usize, end: usize, op: CaseOp) {
+    let mut bytes = line.as_bytes().to_vec();
+    let end = end.min(bytes.len());
+    for b in &mut bytes[start..end] {
+        *b = match op {
+            CaseOp::Lower => b.to_ascii_lowercase(),
+            CaseOp::Upper => b.to_ascii_uppercase(),
+            CaseOp::Toggle => {
+                if b.is_ascii_lowercase() {
+                    b.to_ascii_uppercase()
+                } else if b.is_ascii_uppercase() {
+                    b.to_ascii_lowercase()
+                } else {
+                    *b
+                }
+            }
+        };
+    }
+    if let Ok(updated) = String::from_utf8(bytes) {
+        *line = updated;
+    }
+}
+
+// ============================================================================
 // Tests
 // ============================================================================
 
@@ -325,6 +423,49 @@ mod tests {
         assert!(!Operator::Yank.modifies_buffer());
         assert!(Operator::Change.enters_insert());
         assert!(!Operator::Delete.enters_insert());
+    }
+
+    #[test]
+    fn test_apply_case_charwise() {
+        let mut lines = vec!["AbCdEf".to_string()];
+        let region = OperatorRegion::characterwise(
+            Position::new(LineNr(1), ColNr::from_zero_indexed(1)),
+            Position::new(LineNr(1), ColNr::from_zero_indexed(4)),
+            true,
+        );
+        apply_case(&mut lines, &region, CaseOp::Lower).unwrap();
+        assert_eq!(lines[0], "Abcdef");
+    }
+
+    #[test]
+    fn test_apply_case_linewise() {
+        let mut lines = vec!["Hello".to_string(), "World".to_string()];
+        let region = OperatorRegion::linewise(LineNr(1), LineNr(2));
+        apply_case(&mut lines, &region, CaseOp::Upper).unwrap();
+        assert_eq!(lines, vec!["HELLO", "WORLD"]);
+    }
+
+    #[test]
+    fn test_apply_case_toggle_multiline() {
+        let mut lines = vec!["AbC".to_string(), "dEf".to_string()];
+        let region = OperatorRegion::characterwise(
+            Position::new(LineNr(1), ColNr::from_zero_indexed(0)),
+            Position::new(LineNr(2), ColNr::from_zero_indexed(2)),
+            true,
+        );
+        apply_case(&mut lines, &region, CaseOp::Toggle).unwrap();
+        assert_eq!(lines, vec!["aBc", "DeF"]);
+    }
+
+    #[test]
+    fn test_apply_case_blockwise() {
+        let mut lines = vec!["abCD".to_string(), "efGH".to_string()];
+        let region = OperatorRegion::blockwise(
+            Position::new(LineNr(1), ColNr::from_zero_indexed(2)),
+            Position::new(LineNr(2), ColNr::from_zero_indexed(3)),
+        );
+        apply_case(&mut lines, &region, CaseOp::Lower).unwrap();
+        assert_eq!(lines, vec!["abcd", "efgh"]);
     }
 
     #[allow(dead_code)]

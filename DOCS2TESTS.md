@@ -76,7 +76,7 @@
 - 07.3 Jumping from file to file — Covered (partial): Next/prev navigation in `vxd_tui/tests/fileedit_spec.rs`.
 - 07.4 Backup files — Covered (partial): Backup path helper in `vxd/src/backup.rs`.
 - 07.5 Copy text between files — Missing: Copy across files not tested.
-- 07.6 Viewing a file — Missing: View-only mode not tested.
+- 07.6 Viewing a file — Covered (partial): View-only modifiable test in `vxd_tui/tests/view_spec.rs`.
 - 07.7 Changing the file name — Missing: Renaming/writing new files not tested.
 
 ### usr_08.txt
@@ -104,7 +104,7 @@
 - 10.5 Visual block mode — Missing: Visual block mode not tested.
 - 10.6 Reading and writing part of a file — Missing: Read/write part of file not tested.
 - 10.7 Formatting text — Missing: Formatting text not tested.
-- 10.8 Changing case — Missing: Case change not tested.
+- 10.8 Changing case — Covered (partial): Case change helper tests in `vxd/src/operators.rs`.
 - 10.9 Using an external program — Missing: External commands not tested.
 
 ### usr_11.txt
