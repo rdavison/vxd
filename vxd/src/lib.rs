@@ -158,6 +158,7 @@ pub mod textobjects;
 #[cfg(feature = "digraphs")]
 pub mod digraphs;
 
+#[cfg(feature = "mappings")]
 pub mod mappings;
 
 // ============================================================================

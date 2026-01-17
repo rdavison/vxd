@@ -54,6 +54,7 @@ undo = ["buffer"]
 visual = ["buffer", "cursor", "modes"]
 textobjects = ["buffer", "cursor"]
 digraphs = []
+mappings = ["modes"]
 
 # Meta-features
 all = [
@@ -62,7 +63,7 @@ all = [
     "fileformat", "cwd", "modeline", "cmdline", "autocmd", "windows", "tabs", "folds",
     "filefinder", "fileedit", "binary", "completion", "undo", "visual", "textobjects",
     "backup", "recovery", "filebrowser", "recipes", "suspend", "position", "scroll", "movetext",
-    "showmatch", "digraphs"
+    "showmatch", "digraphs", "mappings"
 ]
 
 [dev-dependencies]
