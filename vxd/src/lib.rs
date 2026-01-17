@@ -34,6 +34,7 @@
 //! - `undo` - Undo/redo tree
 //! - `visual` - Visual mode selections
 //! - `textobjects` - Text objects (iw, aw, ip, etc.)
+//! - `digraphs` - Digraph table
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
@@ -151,6 +152,9 @@ pub mod visual;
 #[cfg(feature = "textobjects")]
 pub mod textobjects;
 
+#[cfg(feature = "digraphs")]
+pub mod digraphs;
+
 // ============================================================================
 // Prelude - convenient imports for implementors
 // ============================================================================
@@ -260,4 +264,7 @@ pub mod prelude {
 
     #[cfg(feature = "textobjects")]
     pub use crate::textobjects::TextObject;
+
+    #[cfg(feature = "digraphs")]
+    pub use crate::digraphs::DigraphTable;
 }

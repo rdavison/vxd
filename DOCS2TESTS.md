@@ -159,7 +159,7 @@
 - 24.6 Inserting a register — Covered (partial): Register content tests in `vxd_tui/tests/register_spec.rs`.
 - 24.7 Abbreviations — Missing: Insert-mode abbreviations not tested.
 - 24.8 Entering special characters — Covered (partial): Special chars/unicode in `vxd_tui/tests/mode_insert_spec.rs`.
-- 24.9 Digraphs — Missing: Digraphs not tested.
+- 24.9 Digraphs — Covered (partial): Digraph table tests in `vxd/src/digraphs.rs`.
 - 24.10 Normal mode commands — Covered (partial): Normal-mode commands exercised in `vxd_tui/tests/mode_normal_spec.rs`.
 
 ### usr_25.txt
