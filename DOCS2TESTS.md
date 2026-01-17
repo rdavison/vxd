@@ -56,7 +56,7 @@
 ### usr_05.txt
 - 05.1 The vimrc file — Not ported: vimrc loading not implemented in Rust.
 - 05.2 Example vimrc contents — Doc-only: Example config content.
-- 05.3 Simple mappings — Missing (module exists): Mappings module created in `vxd/src/mappings.rs`.
+- 05.3 Simple mappings — Covered: Mappings implemented in `vxd_tui/src/input.rs` and tested in `vxd_tui/tests/mapping_spec.rs`.
 - 05.4 Adding a package — Not ported: Package loading not implemented in Rust.
 - 05.5 Adding a plugin — Not ported: Plugin system not implemented in Rust.
 - 05.6 Adding a help file — Not ported: Help tags not implemented in Rust.
@@ -227,7 +227,7 @@
 - 32.4 Time travelling — Missing (module exists): Time travel not tested.
 
 ### usr_40.txt
-- 40.1 Key mapping — Missing: Key mappings not implemented in Rust.
+- 40.1 Key mapping — Covered: Key mappings implemented in `vxd_tui/src/input.rs` and tested in `vxd_tui/tests/mapping_spec.rs`.
 - 40.2 Defining command-line commands — Missing: User commands not tested (parsing only in `vxd/src/commands.rs`).
 - 40.3 Autocommands — Covered (partial): Autocmd parsing in `vxd/src/autocmd.rs`.
 
@@ -298,3 +298,4 @@
 - ~~Add folding behavior tests in `vxd` (sections 28.1-28.9).~~ Done: `vxd_tui/tests/fold_spec.rs` (35 tests)
 - ~~Add visual block mode behavior tests in `vxd_tui` (section 10.5).~~ Done: `vxd_tui/tests/visual_block_spec.rs` (15 tests)
 - ~~Add insert-mode abbreviation tests in `vxd_tui` (section 24.7).~~ Done: `vxd_tui/tests/abbreviation_spec.rs` (4 tests)
+- ~~Add key mapping tests in `vxd_tui` (sections 05.3, 40.1).~~ Done: `vxd_tui/tests/mapping_spec.rs` (2 tests)

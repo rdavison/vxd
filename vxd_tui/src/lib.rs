@@ -16,6 +16,8 @@ pub mod suspend;
 pub mod cmdline;
 pub mod editor;
 pub mod exit;
+pub mod input;
+pub mod key;
 pub mod marks;
 pub mod modes;
 pub mod registers;

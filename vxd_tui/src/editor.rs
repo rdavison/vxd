@@ -12,6 +12,7 @@ use crate::registers::TuiRegisterBank;
 use vxd::abbreviations::{AbbreviationManager, SimpleAbbreviationManager};
 use vxd::buffer::{Buffer, BufferManager};
 use vxd::cursor::{Cursor, CursorContext, CursorPosition, VirtualEdit};
+use vxd::mappings::{MappingManager, SimpleMappingManager};
 use vxd::marks::MarkManager;
 use vxd::modes::{Mode, ModeManager, VisualMode};
 use vxd::motions::CharFindMotion;
@@ -33,6 +34,8 @@ pub struct Editor {
     pub marks: TuiMarkManager,
     /// Abbreviation manager
     pub abbreviations: SimpleAbbreviationManager,
+    /// Mapping manager
+    pub mappings: SimpleMappingManager,
     /// Visual selection anchor
     pub visual_anchor: Option<CursorPosition>,
     last_char_find: Option<CharFindMotion>,
@@ -58,6 +61,7 @@ impl Editor {
             registers: TuiRegisterBank::new(),
             marks: TuiMarkManager::new(),
             abbreviations: SimpleAbbreviationManager::new(),
+            mappings: SimpleMappingManager::new(),
             visual_anchor: None,
             last_char_find: None,
             current_insert: None,

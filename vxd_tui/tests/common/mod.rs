@@ -10,10 +10,13 @@ use vxd::motions::CharFindMotion;
 use vxd::registers::{Register, RegisterBank};
 use vxd::types::LineNr;
 use vxd_tui::editor::Editor;
+use vxd_tui::input::InputHandler;
+use vxd_tui::key::{Key, parse_keys};
 
 /// Test harness that wraps an Editor with convenient test methods.
 pub struct TestHarness {
     pub editor: Editor,
+    pub input_handler: InputHandler,
     pending_g: bool,
     pending_char_find: Option<PendingCharFind>,
 }
@@ -24,6 +27,7 @@ impl TestHarness {
     pub fn new() -> Self {
         TestHarness {
             editor: Editor::new(),
+            input_handler: InputHandler::new(),
             pending_g: false,
             pending_char_find: None,
         }
@@ -121,11 +125,15 @@ impl TestHarness {
     pub fn feed(&mut self, keys: &str) {
         let parsed = parse_keys(keys);
         for key in parsed {
-            self.process_key(key);
+            // Process via input handler for mappings
+            let mapped_keys = self.input_handler.handle_key(key, &self.editor);
+            for k in mapped_keys {
+                self.process_key(k);
+            }
         }
     }
 
-    /// Process a single key.
+    /// Process a single key (internal, post-mapping).
     fn process_key(&mut self, key: Key) {
         match self.editor.mode() {
             Mode::Normal => self.process_normal_key(key),
@@ -371,85 +379,12 @@ impl Default for TestHarness {
     }
 }
 
-/// Parsed key representation.
-#[derive(Debug, Clone, PartialEq)]
-pub enum Key {
-    Char(char),
-    Escape,
-    Enter,
-    Backspace,
-    Delete,
-    Tab,
-    Left,
-    Right,
-    Up,
-    Down,
-    Home,
-    End,
-    PageUp,
-    PageDown,
-    Ctrl(char),
-    Alt(char),
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum PendingCharFind {
     FindForward,
     FindBackward,
     TillForward,
     TillBackward,
-}
-
-/// Parse a Vim-style key sequence into individual keys.
-/// Supports: <Esc>, <CR>, <BS>, <Del>, <Tab>, <Left>, <Right>, <Up>, <Down>,
-/// <Home>, <End>, <PageUp>, <PageDown>, <C-x>, <A-x>, <M-x>
-pub fn parse_keys(input: &str) -> Vec<Key> {
-    let mut keys = Vec::new();
-    let mut chars = input.chars().peekable();
-
-    while let Some(c) = chars.next() {
-        if c == '<' {
-            // Parse special key notation
-            let mut special = String::new();
-            while let Some(&ch) = chars.peek() {
-                if ch == '>' {
-                    chars.next();
-                    break;
-                }
-                special.push(chars.next().unwrap());
-            }
-
-            let key = match special.to_lowercase().as_str() {
-                "esc" | "escape" => Key::Escape,
-                "cr" | "enter" | "return" => Key::Enter,
-                "bs" | "backspace" => Key::Backspace,
-                "del" | "delete" => Key::Delete,
-                "tab" => Key::Tab,
-                "left" => Key::Left,
-                "right" => Key::Right,
-                "up" => Key::Up,
-                "down" => Key::Down,
-                "home" => Key::Home,
-                "end" => Key::End,
-                "pageup" => Key::PageUp,
-                "pagedown" => Key::PageDown,
-                s if s.starts_with("c-") => {
-                    let ch = s.chars().nth(2).unwrap_or('?');
-                    Key::Ctrl(ch)
-                }
-                s if s.starts_with("a-") || s.starts_with("m-") => {
-                    let ch = s.chars().nth(2).unwrap_or('?');
-                    Key::Alt(ch)
-                }
-                _ => Key::Char('?'), // Unknown special key
-            };
-            keys.push(key);
-        } else {
-            keys.push(Key::Char(c));
-        }
-    }
-
-    keys
 }
 
 fn normalize_line_range(start: i64, end: i64, line_count: usize) -> (usize, usize) {

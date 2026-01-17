@@ -5,7 +5,7 @@
 use std::io::{self, stdout};
 
 use crossterm::{
-    event::{self, Event, KeyCode, KeyEventKind, KeyModifiers},
+    event::{self, Event, KeyEventKind},
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
     ExecutableCommand,
 };
@@ -19,10 +19,13 @@ use vxd::cursor::Cursor;
 use vxd::modes::Mode;
 use vxd::registers::{Register, RegisterBank};
 use vxd_tui::editor::Editor;
+use vxd_tui::input::InputHandler;
+use vxd_tui::key::Key;
 
 /// Application state
 struct App {
     editor: Editor,
+    input_handler: InputHandler,
     should_quit: bool,
 }
 
@@ -56,43 +59,51 @@ impl App {
 
         App {
             editor,
+            input_handler: InputHandler::new(),
             should_quit: false,
         }
     }
 
-    fn handle_key(&mut self, code: KeyCode, modifiers: KeyModifiers) {
+    fn handle_key(&mut self, key: Key) {
+        let keys = self.input_handler.handle_key(key, &self.editor);
+        for k in keys {
+            self.process_key_internal(k);
+        }
+    }
+
+    fn process_key_internal(&mut self, key: Key) {
         match self.editor.mode() {
-            Mode::Normal => self.handle_normal_key(code, modifiers),
-            Mode::Insert => self.handle_insert_key(code, modifiers),
+            Mode::Normal => self.handle_normal_key(key),
+            Mode::Insert => self.handle_insert_key(key),
             _ => {}
         }
     }
 
-    fn handle_normal_key(&mut self, code: KeyCode, _modifiers: KeyModifiers) {
-        match code {
+    fn handle_normal_key(&mut self, key: Key) {
+        match key {
             // Quit
-            KeyCode::Char('q') => self.should_quit = true,
+            Key::Char('q') => self.should_quit = true,
 
             // Enter insert mode
-            KeyCode::Char('i') => {
+            Key::Char('i') => {
                 let _ = self.editor.enter_insert();
             }
 
             // Append after cursor
-            KeyCode::Char('a') => {
+            Key::Char('a') => {
                 let _ = self.editor.cursor_right(1);
                 let _ = self.editor.enter_insert();
             }
 
             // Insert at beginning of line
-            KeyCode::Char('I') => {
+            Key::Char('I') => {
                 let ctx = self.editor.cursor_context();
                 let _ = self.editor.cursor.set_col(0, &ctx);
                 let _ = self.editor.enter_insert();
             }
 
             // Append at end of line
-            KeyCode::Char('A') => {
+            Key::Char('A') => {
                 let line_len = self.editor.current_line().len();
                 let ctx = self.editor.cursor_context();
                 let _ = self.editor.cursor.set_col(line_len, &ctx);
@@ -100,7 +111,7 @@ impl App {
             }
 
             // Open line below
-            KeyCode::Char('o') => {
+            Key::Char('o') => {
                 let line = self.editor.cursor.line().0 as i64;
                 let _ = self.editor.buffers.current_mut().set_lines(
                     line,
@@ -116,7 +127,7 @@ impl App {
             }
 
             // Open line above
-            KeyCode::Char('O') => {
+            Key::Char('O') => {
                 let line = self.editor.cursor.line().0 as i64 - 1;
                 let _ = self.editor.buffers.current_mut().set_lines(
                     line,
@@ -131,25 +142,25 @@ impl App {
             }
 
             // Movement
-            KeyCode::Char('h') | KeyCode::Left => {
+            Key::Char('h') | Key::Left => {
                 let _ = self.editor.cursor_left(1);
             }
-            KeyCode::Char('j') | KeyCode::Down => {
+            Key::Char('j') | Key::Down => {
                 let _ = self.editor.cursor_down(1);
             }
-            KeyCode::Char('k') | KeyCode::Up => {
+            Key::Char('k') | Key::Up => {
                 let _ = self.editor.cursor_up(1);
             }
-            KeyCode::Char('l') | KeyCode::Right => {
+            Key::Char('l') | Key::Right => {
                 let _ = self.editor.cursor_right(1);
             }
 
             // Beginning/end of line
-            KeyCode::Char('0') => {
+            Key::Char('0') => {
                 let ctx = self.editor.cursor_context();
                 let _ = self.editor.cursor.set_col(0, &ctx);
             }
-            KeyCode::Char('$') => {
+            Key::Char('$') => {
                 let line_len = self.editor.current_line().len();
                 let ctx = self.editor.cursor_context();
                 let col = if line_len > 0 { line_len - 1 } else { 0 };
@@ -157,7 +168,7 @@ impl App {
             }
 
             // Word movement (simplified)
-            KeyCode::Char('w') => {
+            Key::Char('w') => {
                 // Move to next word start
                 let line = self.editor.current_line();
                 let col = self.editor.cursor.col();
@@ -166,7 +177,7 @@ impl App {
                     let _ = self.editor.cursor.set_col(next_word, &ctx);
                 }
             }
-            KeyCode::Char('b') => {
+            Key::Char('b') => {
                 // Move to previous word start
                 let line = self.editor.current_line();
                 let col = self.editor.cursor.col();
@@ -177,25 +188,25 @@ impl App {
             }
 
             // Delete character
-            KeyCode::Char('x') => {
+            Key::Char('x') => {
                 let _ = self.editor.delete_char();
             }
 
             // Page up/down
-            KeyCode::PageDown => {
+            Key::PageDown => {
                 let _ = self.editor.cursor_down(20);
             }
-            KeyCode::PageUp => {
+            Key::PageUp => {
                 let _ = self.editor.cursor_up(20);
             }
 
             // Go to first/last line
-            KeyCode::Char('g') => {
+            Key::Char('g') => {
                 // gg goes to first line (simplified, just 'g')
                 let ctx = self.editor.cursor_context();
                 let _ = self.editor.cursor.set_line(vxd::types::LineNr(1), &ctx);
             }
-            KeyCode::Char('G') => {
+            Key::Char('G') => {
                 let line_count = self.editor.buffers.current().line_count();
                 let ctx = self.editor.cursor_context();
                 let _ = self
@@ -208,39 +219,41 @@ impl App {
         }
     }
 
-    fn handle_insert_key(&mut self, code: KeyCode, modifiers: KeyModifiers) {
-        match code {
+    fn handle_insert_key(&mut self, key: Key) {
+        match key {
             // Exit insert mode
-            KeyCode::Esc => {
+            Key::Escape => {
                 let _ = self.editor.escape();
             }
 
             // Character input
-            KeyCode::Char(c) => {
+            Key::Char(c) => {
+                let _ = self.editor.insert_char(c);
+            }
+            Key::Ctrl(c) => {
                 // Handle Ctrl+C to exit
-                if modifiers.contains(KeyModifiers::CONTROL) && c == 'c' {
+                if c == 'c' {
                     self.should_quit = true;
                     return;
                 }
-                if modifiers.contains(KeyModifiers::CONTROL) && c == 'a' {
+                if c == 'a' {
                     if let Some(content) = self.editor.registers.get(Register::LastInserted) {
                         let _ = self.editor.insert_text(&content.as_string());
                     }
                     return;
                 }
-                if modifiers.contains(KeyModifiers::CONTROL) && c == 'y' {
+                if c == 'y' {
                     let _ = self.editor.insert_from_adjacent_line(-1);
                     return;
                 }
-                if modifiers.contains(KeyModifiers::CONTROL) && c == 'e' {
+                if c == 'e' {
                     let _ = self.editor.insert_from_adjacent_line(1);
                     return;
                 }
-                let _ = self.editor.insert_char(c);
             }
 
             // Backspace
-            KeyCode::Backspace => {
+            Key::Backspace => {
                 let col = self.editor.cursor.col();
                 if col > 0 {
                     let _ = self.editor.cursor_left(1);
@@ -278,17 +291,17 @@ impl App {
             }
 
             // Delete (forward)
-            KeyCode::Delete => {
+            Key::Delete => {
                 let _ = self.editor.delete_char();
             }
 
             // Enter
-            KeyCode::Enter => {
+            Key::Enter => {
                 let _ = self.editor.insert_newline();
             }
 
             // Tab
-            KeyCode::Tab => {
+            Key::Tab => {
                 // Insert 4 spaces
                 for _ in 0..4 {
                     let _ = self.editor.insert_char(' ');
@@ -296,16 +309,16 @@ impl App {
             }
 
             // Arrow keys
-            KeyCode::Left => {
+            Key::Left => {
                 let _ = self.editor.cursor_left(1);
             }
-            KeyCode::Right => {
+            Key::Right => {
                 let _ = self.editor.cursor_right(1);
             }
-            KeyCode::Up => {
+            Key::Up => {
                 let _ = self.editor.cursor_up(1);
             }
-            KeyCode::Down => {
+            Key::Down => {
                 let _ = self.editor.cursor_down(1);
             }
 
@@ -392,9 +405,10 @@ fn main() -> io::Result<()> {
 
         // Handle events
         if event::poll(std::time::Duration::from_millis(16))? {
-            if let Event::Key(key) = event::read()? {
-                if key.kind == KeyEventKind::Press {
-                    app.handle_key(key.code, key.modifiers);
+            if let Event::Key(key_event) = event::read()? {
+                if key_event.kind == KeyEventKind::Press {
+                    let key = Key::from(key_event);
+                    app.handle_key(key);
                 }
             }
         }
