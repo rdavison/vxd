@@ -94,6 +94,52 @@ pub struct SearchMatch {
     pub groups: Vec<String>,
 }
 
+/// Apply a search offset to a match to compute the cursor destination.
+pub fn apply_search_offset(
+    found: &SearchMatch,
+    pattern: &SearchPattern,
+    lines: &[String],
+) -> CursorPosition {
+    let line_count = lines.len().max(1);
+    let clamp_line = |line: i32| -> LineNr {
+        let line = line.clamp(1, line_count as i32);
+        LineNr(line as usize)
+    };
+    let line_text = |line: LineNr| -> &str {
+        lines
+            .get(line.0.saturating_sub(1))
+            .map(|s| s.as_str())
+            .unwrap_or("")
+    };
+    let clamp_col = |line: LineNr, col: i32| -> usize {
+        let line_len = line_text(line).len() as i32;
+        col.clamp(0, line_len) as usize
+    };
+
+    match pattern.offset {
+        SearchOffset::None => found.start,
+        SearchOffset::Line(delta) => {
+            let target_line = clamp_line(found.start.line.0 as i32 + delta);
+            CursorPosition::new(target_line, 0)
+        }
+        SearchOffset::End(delta) => {
+            let base = found.end.col.saturating_sub(1) as i32 + delta;
+            let line = found.start.line;
+            CursorPosition::new(line, clamp_col(line, base))
+        }
+        SearchOffset::Start(delta) => {
+            let base = found.start.col as i32 + delta;
+            let line = found.start.line;
+            CursorPosition::new(line, clamp_col(line, base))
+        }
+        SearchOffset::Column(delta) => {
+            let base = found.start.col as i32 + delta;
+            let line = found.start.line;
+            CursorPosition::new(line, clamp_col(line, base))
+        }
+    }
+}
+
 // ============================================================================
 // Search State
 // ============================================================================
@@ -683,6 +729,85 @@ mod tests {
 
         assert_eq!(with_wrap.start, CursorPosition::new(LineNr(1), 0));
         assert_eq!(with_wrap.text, "alpha");
+    }
+
+    #[test]
+    fn test_search_offset_line() {
+        let lines = vec![
+            "default".to_string(),
+            "line2".to_string(),
+            "line3".to_string(),
+        ];
+        let engine = SimpleSearchEngine::new(lines.clone());
+        let pattern = SearchPattern {
+            pattern: "default".to_string(),
+            direction: Direction::Forward,
+            offset: SearchOffset::Line(2),
+            valid: true,
+        };
+        let found = engine
+            .search(&pattern, CursorPosition::ORIGIN, &SearchOptions::default())
+            .unwrap()
+            .unwrap();
+        let pos = apply_search_offset(&found, &pattern, &lines);
+        assert_eq!(pos.line, LineNr(3));
+        assert_eq!(pos.col, 0);
+    }
+
+    #[test]
+    fn test_search_offset_line_negative() {
+        let lines = vec!["top".to_string(), "const value".to_string()];
+        let engine = SimpleSearchEngine::new(lines.clone());
+        let pattern = SearchPattern {
+            pattern: "const".to_string(),
+            direction: Direction::Forward,
+            offset: SearchOffset::Line(-1),
+            valid: true,
+        };
+        let found = engine
+            .search(&pattern, CursorPosition::ORIGIN, &SearchOptions::default())
+            .unwrap()
+            .unwrap();
+        let pos = apply_search_offset(&found, &pattern, &lines);
+        assert_eq!(pos.line, LineNr(1));
+        assert_eq!(pos.col, 0);
+    }
+
+    #[test]
+    fn test_search_offset_end() {
+        let lines = vec!["const value".to_string()];
+        let engine = SimpleSearchEngine::new(lines.clone());
+        let mut pattern = SearchPattern::forward("const");
+        pattern.offset = SearchOffset::End(0);
+        let found = engine
+            .search(&pattern, CursorPosition::ORIGIN, &SearchOptions::default())
+            .unwrap()
+            .unwrap();
+        let pos = apply_search_offset(&found, &pattern, &lines);
+        assert_eq!(pos.line, LineNr(1));
+        assert_eq!(pos.col, 4);
+
+        pattern.offset = SearchOffset::End(1);
+        let pos = apply_search_offset(&found, &pattern, &lines);
+        assert_eq!(pos.col, 5);
+    }
+
+    #[test]
+    fn test_search_offset_begin_column() {
+        let lines = vec!["const value".to_string()];
+        let engine = SimpleSearchEngine::new(lines.clone());
+        let mut pattern = SearchPattern::forward("const");
+        pattern.offset = SearchOffset::Column(2);
+        let found = engine
+            .search(&pattern, CursorPosition::ORIGIN, &SearchOptions::default())
+            .unwrap()
+            .unwrap();
+        let pos = apply_search_offset(&found, &pattern, &lines);
+        assert_eq!(pos.col, 2);
+
+        pattern.offset = SearchOffset::Start(1);
+        let pos = apply_search_offset(&found, &pattern, &lines);
+        assert_eq!(pos.col, 1);
     }
 
     #[allow(dead_code)]
