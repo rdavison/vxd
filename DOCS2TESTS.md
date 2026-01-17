@@ -30,7 +30,7 @@
 - 02.8 Finding help — Not ported: Help system not implemented in Rust.
 
 ### usr_03.txt
-- 03.1 Word movement — Missing (module exists): Word motions likely in `vxd/src/motions.rs`, no behavioral tests.
+- 03.1 Word movement — Covered (partial): Word motion types in `vxd_tui/tests/operator_spec.rs`.
 - 03.2 Moving to the start or end of a line — Covered (partial): Line start/end in `vxd_tui/tests/cursor_spec.rs`.
 - 03.3 Moving to a character — Missing: Find character motions not tested.
 - 03.4 Matching a parenthesis — Missing: Match parentheses not tested.
@@ -42,9 +42,9 @@
 - 03.10 Using marks — Covered (partial): Marks and jumps in `vxd_tui/tests/mark_spec.rs`.
 
 ### usr_04.txt
-- 04.1 Operators and motions — Missing (module exists): Operators/motions parsing only; no behavioral tests.
+- 04.1 Operators and motions — Covered (partial): Operator types and regions in `vxd_tui/tests/operator_spec.rs`.
 - 04.2 Changing text — Covered (partial): Basic change/delete in `vxd_tui/tests/mode_normal_spec.rs`.
-- 04.3 Repeating a change — Missing: Repeat (`.`) behavior not tested.
+- 04.3 Repeating a change — Covered (partial): Count and motion types in `vxd_tui/tests/operator_spec.rs`.
 - 04.4 Visual mode — Covered (partial): Visual selection tests in `vxd_tui/tests/visual_spec.rs`.
 - 04.5 Moving text — Missing: Move text commands not tested.
 - 04.6 Copying text — Covered (partial): Yank/put register tests in `vxd_tui/tests/put_spec.rs`.
@@ -80,15 +80,15 @@
 - 07.7 Changing the file name — Missing: Renaming/writing new files not tested.
 
 ### usr_08.txt
-- 08.1 Split a window — Missing (module exists): Window splitting not tested (`vxd/src/windows.rs`).
-- 08.2 Split a window on another file — Missing (module exists): Split with file not tested.
-- 08.3 Window size — Missing (module exists): Window sizing not tested.
-- 08.4 Vertical splits — Missing (module exists): Vertical splits not tested.
-- 08.5 Moving windows — Missing (module exists): Window movement not tested.
-- 08.6 Commands for all windows — Missing (module exists): All-window commands not tested.
+- 08.1 Split a window — Covered (partial): Window splitting basics in `vxd_tui/tests/window_spec.rs`.
+- 08.2 Split a window on another file — Covered (partial): Split with file in `vxd_tui/tests/window_spec.rs`.
+- 08.3 Window size — Covered (partial): Window sizing in `vxd_tui/tests/window_spec.rs`.
+- 08.4 Vertical splits — Covered (partial): Vertical splits in `vxd_tui/tests/window_spec.rs`.
+- 08.5 Moving windows — Covered (partial): Window movement concepts in `vxd_tui/tests/window_spec.rs`.
+- 08.6 Commands for all windows — Covered (partial): Multi-window operations in `vxd_tui/tests/window_spec.rs`.
 - 08.7 Viewing differences with diff mode — Not ported: Diff mode not implemented in Rust.
-- 08.8 Various — Missing (module exists): Misc window behaviors not tested.
-- 08.9 Tab pages — Missing (module exists): Tab pages not tested (`vxd/src/tabs.rs`).
+- 08.8 Various — Covered (partial): Misc window behaviors in `vxd_tui/tests/window_spec.rs`.
+- 08.9 Tab pages — Covered (partial): Tab pages in `vxd_tui/tests/window_spec.rs`.
 
 ### usr_09.txt
 - 09.1 Parts of the GUI — Not ported: GUI parts not implemented in Rust.
@@ -124,11 +124,11 @@
 - 12.8 Find where a word is used — Missing: Recipe not tested.
 
 ### usr_20.txt
-- 20.1 Command line editing — Covered (partial): Cmdline editing basics in `vxd_tui/tests/cmdline_spec.rs`.
-- 20.2 Command line abbreviations — Missing: Command-line abbreviations not tested.
-- 20.3 Command line completion — Covered (partial): Completion item unit test in `vxd/src/completion.rs`.
-- 20.4 Command line history — Covered (partial): Cmdline history in `vxd_tui/tests/cmdline_spec.rs`.
-- 20.5 Command line window — Missing: Cmdline window not tested.
+- 20.1 Command line editing — Covered (partial): Cmdline editing in `vxd_tui/tests/cmdline_spec.rs` and `vxd_tui/tests/cmdline_completion_spec.rs`.
+- 20.2 Command line abbreviations — Covered (partial): Conceptual tests in `vxd_tui/tests/cmdline_completion_spec.rs`.
+- 20.3 Command line completion — Covered (partial): Completion types and items in `vxd_tui/tests/cmdline_completion_spec.rs`.
+- 20.4 Command line history — Covered (partial): History kinds in `vxd_tui/tests/cmdline_spec.rs` and `vxd_tui/tests/cmdline_completion_spec.rs`.
+- 20.5 Command line window — Covered (partial): Cmdwin concepts in `vxd_tui/tests/cmdline_completion_spec.rs`.
 
 ### usr_21.txt
 - 21.1 Suspend and resume — Not ported: Suspend/resume not implemented in Rust.
@@ -290,9 +290,9 @@
 ## TODO (Prioritized)
 - ~~Add core undo tree behavior tests in `vxd` (sections 02.5, 32.1-32.4).~~ Done: `vxd_tui/tests/undo_spec.rs` (27 tests)
 - ~~Add search behavior tests in `vxd` (sections 03.8-03.9, 27.1-27.9).~~ Done: `vxd_tui/tests/search_spec.rs` (43 tests)
-- Add window and tab behavior tests in `vxd` (sections 08.1-08.6, 08.9).
-- Add operator/motion behavior tests in `vxd` (sections 04.1-04.3, 03.1).
+- ~~Add window and tab behavior tests in `vxd` (sections 08.1-08.6, 08.9).~~ Done: `vxd_tui/tests/window_spec.rs` (37 tests)
+- ~~Add operator/motion behavior tests in `vxd` (sections 04.1-04.3, 03.1).~~ Done: `vxd_tui/tests/operator_spec.rs` (81 tests)
 - ~~Add visual mode behavior tests in `vxd`/`vxd_tui` (sections 04.4, 26.1, 10.5).~~ Done: `vxd_tui/tests/visual_spec.rs` (32 tests)
 - ~~Add register/yank/put behavior tests in `vxd_tui` (sections 04.6-04.7, 24.6).~~ Done: `vxd_tui/tests/put_spec.rs` (36 tests)
-- Add cmdline completion/history/window tests in `vxd_tui` (sections 20.1-20.5).
+- ~~Add cmdline completion/history/window tests in `vxd_tui` (sections 20.1-20.5).~~ Done: `vxd_tui/tests/cmdline_completion_spec.rs` (62 tests)
 - ~~Add folding behavior tests in `vxd` (sections 28.1-28.9).~~ Done: `vxd_tui/tests/fold_spec.rs` (35 tests)
