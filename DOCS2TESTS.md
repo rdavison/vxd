@@ -177,7 +177,7 @@
 
 ### usr_27.txt
 - 27.1 Ignoring case — Covered (partial): Ignorecase/smartcase tests in `vxd/src/search.rs`.
-- 27.2 Wrapping around the file end — Missing: Search wrap not tested.
+- 27.2 Wrapping around the file end — Covered (partial): Wrapscan behavior in `vxd/src/search.rs`.
 - 27.3 Offsets — Missing: Search offsets not tested.
 - 27.4 Matching multiple times — Missing: Multi-match search not tested.
 - 27.5 Alternatives — Missing: Alternatives not tested.

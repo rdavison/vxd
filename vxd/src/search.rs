@@ -657,6 +657,34 @@ mod tests {
         assert!(found.is_none());
     }
 
+    #[test]
+    fn test_simple_search_wrapscan_forward() {
+        let engine = SimpleSearchEngine::new(vec![
+            "alpha".to_string(),
+            "beta".to_string(),
+            "gamma".to_string(),
+            "alpha".to_string(),
+        ]);
+        let pattern = SearchPattern::forward("alpha");
+        let start = CursorPosition::new(LineNr(4), 5);
+        let options_no_wrap = SearchOptions::default();
+
+        let without_wrap = engine.search(&pattern, start, &options_no_wrap).unwrap();
+        assert!(without_wrap.is_none());
+
+        let options_wrap = SearchOptions {
+            wrapscan: true,
+            ..Default::default()
+        };
+        let with_wrap = engine
+            .search(&pattern, start, &options_wrap)
+            .unwrap()
+            .expect("expected wrapped match");
+
+        assert_eq!(with_wrap.start, CursorPosition::new(LineNr(1), 0));
+        assert_eq!(with_wrap.text, "alpha");
+    }
+
     #[allow(dead_code)]
     mod behavioral_tests {
         //! # Search Behavioral Tests
