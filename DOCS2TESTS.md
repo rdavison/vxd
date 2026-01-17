@@ -153,7 +153,7 @@
 ### usr_24.txt
 - 24.1 Making corrections — Covered (partial): Insert corrections/backspace in `vxd_tui/tests/mode_insert_spec.rs`.
 - 24.2 Showing matches — Covered (partial): Bracket matching helper in `vxd/src/showmatch.rs`.
-- 24.3 Completion — Missing: Insert-mode completion not tested.
+- 24.3 Completion — Covered (partial): Buffer/line completion engine tests in `vxd/src/completion.rs`.
 - 24.4 Repeating an insert — Covered (partial): Repeat insert via Ctrl-A in `vxd_tui/tests/mode_insert_spec.rs`.
 - 24.5 Copying from another line — Missing: Copy from another line not tested.
 - 24.6 Inserting a register — Covered (partial): Register content tests in `vxd_tui/tests/register_spec.rs`.
