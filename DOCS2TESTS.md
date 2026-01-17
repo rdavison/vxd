@@ -176,7 +176,7 @@
 - 26.4 Using Vim from a shell script — Not ported: Shell script integration not implemented in Rust.
 
 ### usr_27.txt
-- 27.1 Ignoring case — Missing (module exists): Ignorecase search not tested.
+- 27.1 Ignoring case — Covered (partial): Ignorecase/smartcase tests in `vxd/src/search.rs`.
 - 27.2 Wrapping around the file end — Missing: Search wrap not tested.
 - 27.3 Offsets — Missing: Search offsets not tested.
 - 27.4 Matching multiple times — Missing: Multi-match search not tested.

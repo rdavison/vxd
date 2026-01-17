@@ -190,6 +190,255 @@ pub trait SearchEngine {
 }
 
 // ============================================================================
+// Simple Search Engine
+// ============================================================================
+
+/// A minimal search engine over in-memory lines.
+#[derive(Debug, Clone, Default)]
+pub struct SimpleSearchEngine {
+    lines: Vec<String>,
+    state: SearchState,
+}
+
+impl SimpleSearchEngine {
+    /// Create a new search engine with the given lines.
+    pub fn new(lines: Vec<String>) -> Self {
+        SimpleSearchEngine {
+            lines,
+            state: SearchState::default(),
+        }
+    }
+
+    /// Replace the engine's lines.
+    pub fn set_lines(&mut self, lines: Vec<String>) {
+        self.lines = lines;
+    }
+
+    fn case_sensitive(options: &SearchOptions, pattern: &str) -> bool {
+        if options.ignorecase {
+            if options.smartcase && pattern.chars().any(|ch| ch.is_uppercase()) {
+                true
+            } else {
+                false
+            }
+        } else {
+            true
+        }
+    }
+
+    fn match_text(line: &str, start_col: usize, needle: &str, case_sensitive: bool) -> Option<usize> {
+        if start_col > line.len() {
+            return None;
+        }
+        let search_line = if case_sensitive {
+            std::borrow::Cow::Borrowed(line)
+        } else {
+            std::borrow::Cow::Owned(line.to_lowercase())
+        };
+        let needle = if case_sensitive {
+            std::borrow::Cow::Borrowed(needle)
+        } else {
+            std::borrow::Cow::Owned(needle.to_lowercase())
+        };
+        let haystack = &search_line[start_col..];
+        haystack.find(needle.as_ref()).map(|pos| start_col + pos)
+    }
+
+    fn match_text_backward(
+        line: &str,
+        end_col: usize,
+        needle: &str,
+        case_sensitive: bool,
+    ) -> Option<usize> {
+        let end_col = end_col.min(line.len());
+        let search_line = if case_sensitive {
+            std::borrow::Cow::Borrowed(line)
+        } else {
+            std::borrow::Cow::Owned(line.to_lowercase())
+        };
+        let needle = if case_sensitive {
+            std::borrow::Cow::Borrowed(needle)
+        } else {
+            std::borrow::Cow::Owned(needle.to_lowercase())
+        };
+        let haystack = &search_line[..end_col];
+        haystack.rfind(needle.as_ref())
+    }
+
+    fn build_match(
+        line_idx: usize,
+        match_col: usize,
+        needle_len: usize,
+        line: &str,
+    ) -> SearchMatch {
+        SearchMatch {
+            start: CursorPosition::new(LineNr(line_idx + 1), match_col),
+            end: CursorPosition::new(LineNr(line_idx + 1), match_col + needle_len),
+            text: line[match_col..match_col + needle_len].to_string(),
+            groups: Vec::new(),
+        }
+    }
+
+    fn search_forward(
+        &self,
+        pattern: &SearchPattern,
+        from: CursorPosition,
+        options: &SearchOptions,
+    ) -> Option<SearchMatch> {
+        let case_sensitive = Self::case_sensitive(options, &pattern.pattern);
+        let start_line = from.line.0.saturating_sub(1);
+        for (idx, line) in self.lines.iter().enumerate().skip(start_line) {
+            let start_col = if idx == start_line { from.col } else { 0 };
+            if let Some(match_col) =
+                Self::match_text(line, start_col, &pattern.pattern, case_sensitive)
+            {
+                return Some(Self::build_match(idx, match_col, pattern.pattern.len(), line));
+            }
+        }
+        None
+    }
+
+    fn search_backward(
+        &self,
+        pattern: &SearchPattern,
+        from: CursorPosition,
+        options: &SearchOptions,
+    ) -> Option<SearchMatch> {
+        let case_sensitive = Self::case_sensitive(options, &pattern.pattern);
+        let start_line = from.line.0.saturating_sub(1);
+        for (idx, line) in self.lines.iter().enumerate().take(start_line + 1).rev() {
+            let end_col = if idx == start_line { from.col } else { line.len() };
+            if let Some(match_col) =
+                Self::match_text_backward(line, end_col, &pattern.pattern, case_sensitive)
+            {
+                return Some(Self::build_match(idx, match_col, pattern.pattern.len(), line));
+            }
+        }
+        None
+    }
+}
+
+impl SearchEngine for SimpleSearchEngine {
+    fn compile(&self, pattern: &str, _options: &SearchOptions) -> VimResult<SearchPattern> {
+        if pattern.is_empty() {
+            return Err(VimError::InvalidPattern("empty pattern".to_string()));
+        }
+        Ok(SearchPattern::forward(pattern))
+    }
+
+    fn search(
+        &self,
+        pattern: &SearchPattern,
+        from: CursorPosition,
+        options: &SearchOptions,
+    ) -> VimResult<Option<SearchMatch>> {
+        if pattern.pattern.is_empty() {
+            return Err(VimError::PatternNotFound(pattern.pattern.clone()));
+        }
+        let found = match pattern.direction {
+            Direction::Forward => self.search_forward(pattern, from, options),
+            Direction::Backward => self.search_backward(pattern, from, options),
+        };
+        if found.is_none() && options.wrapscan {
+            let wrap_from = match pattern.direction {
+                Direction::Forward => CursorPosition::ORIGIN,
+                Direction::Backward => {
+                    let last_line = self.lines.len().max(1);
+                    CursorPosition::new(LineNr(last_line), usize::MAX)
+                }
+            };
+            let wrapped = match pattern.direction {
+                Direction::Forward => self.search_forward(pattern, wrap_from, options),
+                Direction::Backward => self.search_backward(pattern, wrap_from, options),
+            };
+            return Ok(wrapped);
+        }
+        Ok(found)
+    }
+
+    fn find_all(
+        &self,
+        pattern: &SearchPattern,
+        start: CursorPosition,
+        end: CursorPosition,
+        options: &SearchOptions,
+    ) -> VimResult<Vec<SearchMatch>> {
+        if pattern.pattern.is_empty() {
+            return Err(VimError::PatternNotFound(pattern.pattern.clone()));
+        }
+        let case_sensitive = Self::case_sensitive(options, &pattern.pattern);
+        let mut matches = Vec::new();
+        let start_line = start.line.0.saturating_sub(1);
+        let end_line = end.line.0.saturating_sub(1).min(self.lines.len().saturating_sub(1));
+
+        for idx in start_line..=end_line {
+            let line = &self.lines[idx];
+            let line_start = if idx == start_line { start.col } else { 0 };
+            let mut line_end = if idx == end_line { end.col } else { line.len() };
+            line_end = line_end.min(line.len());
+            let mut offset = line_start;
+            while offset <= line_end {
+                let search_line = if case_sensitive {
+                    std::borrow::Cow::Borrowed(line)
+                } else {
+                    std::borrow::Cow::Owned(line.to_lowercase())
+                };
+                let needle = if case_sensitive {
+                    std::borrow::Cow::Borrowed(pattern.pattern.as_str())
+                } else {
+                    std::borrow::Cow::Owned(pattern.pattern.to_lowercase())
+                };
+                let haystack = &search_line[offset..line_end];
+                if let Some(pos) = haystack.find(needle.as_ref()) {
+                    let match_col = offset + pos;
+                    matches.push(Self::build_match(
+                        idx,
+                        match_col,
+                        pattern.pattern.len(),
+                        line,
+                    ));
+                    let advance = pattern.pattern.len().max(1);
+                    offset = match_col + advance;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        Ok(matches)
+    }
+
+    fn count_matches(&self, pattern: &SearchPattern, options: &SearchOptions) -> VimResult<usize> {
+        let end_line = self.lines.len().max(1);
+        let start = CursorPosition::ORIGIN;
+        let end = CursorPosition::new(LineNr(end_line), usize::MAX);
+        Ok(self.find_all(pattern, start, end, options)?.len())
+    }
+
+    fn search_word(
+        &self,
+        word: &str,
+        direction: Direction,
+        _whole_word: bool,
+    ) -> VimResult<SearchPattern> {
+        Ok(SearchPattern {
+            pattern: word.to_string(),
+            direction,
+            offset: SearchOffset::None,
+            valid: !word.is_empty(),
+        })
+    }
+
+    fn state(&self) -> &SearchState {
+        &self.state
+    }
+
+    fn state_mut(&mut self) -> &mut SearchState {
+        &mut self.state
+    }
+}
+
+// ============================================================================
 // Substitute Command Types
 // ============================================================================
 
@@ -355,6 +604,57 @@ mod tests {
 
         let out = apply_substitute(&lines, &spec, Some("beta")).unwrap();
         assert_eq!(out, vec!["alpha omega".to_string()]);
+    }
+
+    #[test]
+    fn test_simple_search_ignorecase_matches() {
+        let engine = SimpleSearchEngine::new(vec!["Alpha beta".to_string()]);
+        let options = SearchOptions {
+            ignorecase: true,
+            ..Default::default()
+        };
+        let pattern = SearchPattern::forward("alpha");
+
+        let found = engine
+            .search(&pattern, CursorPosition::ORIGIN, &options)
+            .unwrap()
+            .expect("expected match");
+
+        assert_eq!(found.start, CursorPosition::new(LineNr(1), 0));
+        assert_eq!(found.text, "Alpha");
+    }
+
+    #[test]
+    fn test_simple_search_smartcase_disables_ignorecase() {
+        let engine = SimpleSearchEngine::new(vec!["alpha beta".to_string()]);
+        let options = SearchOptions {
+            ignorecase: true,
+            smartcase: true,
+            ..Default::default()
+        };
+
+        let lower = SearchPattern::forward("beta");
+        let upper = SearchPattern::forward("BETA");
+
+        let lower_match = engine
+            .search(&lower, CursorPosition::ORIGIN, &options)
+            .unwrap();
+        let upper_match = engine
+            .search(&upper, CursorPosition::ORIGIN, &options)
+            .unwrap();
+
+        assert!(lower_match.is_some());
+        assert!(upper_match.is_none());
+    }
+
+    #[test]
+    fn test_simple_search_case_sensitive_default() {
+        let engine = SimpleSearchEngine::new(vec!["Alpha beta".to_string()]);
+        let options = SearchOptions::default();
+        let pattern = SearchPattern::forward("alpha");
+
+        let found = engine.search(&pattern, CursorPosition::ORIGIN, &options).unwrap();
+        assert!(found.is_none());
     }
 
     #[allow(dead_code)]
